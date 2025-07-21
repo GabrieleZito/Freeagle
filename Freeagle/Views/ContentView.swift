@@ -7,12 +7,16 @@
 
 import SwiftUI
 
+// controllo se nickname è presente in userdefaults
+// se si -> ListView
+// se no -> LoginView
+
 struct ContentView: View {
     var body: some View {
         VStack {
             Image(systemName: "globe")
                 .imageScale(.large)
-                .foregroundStyle(.tint) 
+                .foregroundStyle(.tint)
             Text("Hello, world!")
         }
         .padding()
