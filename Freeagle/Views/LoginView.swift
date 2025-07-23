@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct LoginView: View {
     
@@ -12,33 +13,58 @@ struct LoginView: View {
     
     var body: some View {
         if isLoggedIn{
-            EventListView()
+            MainView()
         }else{
             login
         }
     }
     
     var login: some View {
+            
             ZStack {
-                
                 Color.blue.edgesIgnoringSafeArea(.all)
-                Text("Nickname")
-                    .padding()
-                    .frame(width: 300, height: 50, alignment: .center)
-                    .background(Color.orange)
-                    .font(.title)
-                    .fontWeight(.light)
-                    .foregroundColor(.white)
-                    .padding(.bottom, 0.0)
-                    .border(.orange, width: 1)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 50)
+                VStack{
+                    if isLoading {
+                        ProgressView("Loading...")
+                    } else if user != nil {
+                        Text("Username already taken")
+                            .foregroundStyle(.red)
+                    }
+                    
+                    if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
+                    }
+                    TextField("Enter Username", text: $username)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onSubmit {
+                            if username == "" {
+                                errorMessage = "Username cannot be empty"
+                            }else{
+                                fetchUserByUsername(username)
+                            }
+                        }
+                        .padding()
+                        .frame(width: 300, height: 50, alignment: .center)
+                        .background(Color.orange)
+                        .font(.title)
+                        .fontWeight(.light)
+                        .foregroundColor(.white)
+                        .padding(.bottom, 0.0)
+                        .border(.orange, width: 1)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 50)
                             .stroke(.orange, style: StrokeStyle(lineWidth: 6))
                             //.background(Color.cyan)
-                    )
-                    .cornerRadius(50)
-                .padding(.bottom, 70)    }
+                        )
+                        .cornerRadius(50)
+                        .padding(.bottom, 70)
+            }
         }
+        
+    }
     
     private var loginForm: some View{
         VStack(spacing: 20) {
@@ -96,6 +122,8 @@ struct LoginView: View {
             }
         }
     }
+    
+
 }
 
 #Preview{
