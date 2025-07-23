@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E0D8E9E42E2E466C00E477D0 /* ParthenoKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E0D8E9E32E2E466C00E477D0 /* ParthenoKit.xcframework */; };
+		E0D8E9E52E2E466C00E477D0 /* ParthenoKit.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E0D8E9E32E2E466C00E477D0 /* ParthenoKit.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E0D8E9A02E2B781F00E477D0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -23,10 +28,25 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		E0D8E9E62E2E466C00E477D0 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				E0D8E9E52E2E466C00E477D0 /* ParthenoKit.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		E0D8E9922E2B781D00E477D0 /* Freeagle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeagle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0D8E99F2E2B781F00E477D0 /* FreeagleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FreeagleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0D8E9A92E2B781F00E477D0 /* FreeagleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FreeagleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E0D8E9E32E2E466C00E477D0 /* ParthenoKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = ParthenoKit.xcframework; path = ../../../Downloads/ParthenoKit.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E0D8E9E42E2E466C00E477D0 /* ParthenoKit.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +99,7 @@
 				E0D8E9942E2B781D00E477D0 /* Freeagle */,
 				E0D8E9A22E2B781F00E477D0 /* FreeagleTests */,
 				E0D8E9AC2E2B781F00E477D0 /* FreeagleUITests */,
+				E0D8E9E22E2E466B00E477D0 /* Frameworks */,
 				E0D8E9932E2B781D00E477D0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -92,6 +114,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E0D8E9E22E2E466B00E477D0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E0D8E9E32E2E466C00E477D0 /* ParthenoKit.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -102,6 +132,7 @@
 				E0D8E98E2E2B781D00E477D0 /* Sources */,
 				E0D8E98F2E2B781D00E477D0 /* Frameworks */,
 				E0D8E9902E2B781D00E477D0 /* Resources */,
+				E0D8E9E62E2E466C00E477D0 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

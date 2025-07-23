@@ -12,15 +12,30 @@ import SwiftUI
 // se no -> LoginView
 
 struct ContentView: View {
+    
+    @State private var isLoggedIn: Bool = false
+    @State private var isLoading: Bool = true
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        VStack{
+            if isLoading{
+                Text("Loading...")
+            }else if isLoggedIn{
+                MainView()
+            }else {
+                LoginView()
+            }
+        }.onAppear{
+            checkUserStatus()
         }
-        .padding()
+
     }
+    
+    private func checkUserStatus(){
+        isLoggedIn = UserDefaults.standard.string(forKey: "username") != nil
+        isLoading = false
+    }
+    
 }
 
 #Preview {
