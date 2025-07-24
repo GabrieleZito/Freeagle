@@ -8,8 +8,15 @@
 import SwiftUI
 
 struct EventListView: View {
+    var username = UserDefaults.standard.object(forKey: "username")
+    
     var body: some View {
-        Text("EventListView")
+        
+        VStack{
+            Text("EventListView")
+            Text("username: \(username ?? "")")
+        }
+        
     }
 }
 
