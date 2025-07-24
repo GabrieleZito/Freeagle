@@ -9,7 +9,7 @@ struct LoginView: View {
     @State private var username: String = ""
     @State private var isLoggedIn: Bool = false
     
-    private let userService = UserService()
+    private let userService = APIService()
     private let textLimit = 15
     
     var body: some View {
@@ -162,6 +162,8 @@ struct LoginView: View {
                     if fetchedUser == nil {
                         UserDefaults.standard.set(username, forKey: "username")
                         self.isLoggedIn = true
+                    }else{
+                        self.errorMessage = "Username already taken"
                     }
                     await MainActor.run {
                         self.user = fetchedUser

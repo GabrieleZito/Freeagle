@@ -6,11 +6,8 @@
 //
 
 import Foundation
-import ParthenoKit
 
-
-
-struct UserService {
+struct APIService {
     private let baseURL: String = "https://afp-server-g7j1.onrender.com"
     //private let baseURL: String = "http://localhost:3000"
     
@@ -26,5 +23,12 @@ struct UserService {
             }
         let decoded = try JSONDecoder().decode(User.self, from: data)
         return decoded
+    }
+    
+    func fetchEvents() async throws -> [Event] {
+        let url = URL(string: "\(baseURL)/events/all")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let events = try JSONDecoder().decode([Event].self, from: data)
+        return events
     }
 }
