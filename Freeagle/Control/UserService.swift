@@ -10,9 +10,9 @@ import ParthenoKit
 
 
 
-struct UserService{
-    //private let baseURL: String = "https://afp-server-g7j1.onrender.com"
-    private let baseURL: String = "http://localhost:3000"
+struct UserService {
+    private let baseURL: String = "https://afp-server-g7j1.onrender.com"
+    //private let baseURL: String = "http://localhost:3000"
     
     func getUserByUsername(username: String) async throws -> User?{
         guard let encodedUsername = username.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
