@@ -9,7 +9,7 @@ struct LoginView: View {
     @State private var username: String = ""
     @State private var isLoggedIn: Bool = false
     
-    private let userService = APIService()
+    private let api = APIService()
     private let textLimit = 15
     
     var body: some View {
@@ -26,10 +26,10 @@ struct LoginView: View {
                 // Gradient background
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        Color.blue.opacity(0.8),
-                        Color.blue.opacity(0.6),
-                        Color.cyan.opacity(0.4)
-                    ]),
+                        Color.cyan.opacity(0.8),
+                        Color(red: 0/255, green: 0/255, blue: 173/255).opacity(0.8),
+                        Color(red: 0/255, green: 0/255, blue: 173/255).opacity(0.9)]),
+                    
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -41,9 +41,9 @@ struct LoginView: View {
                     // Titolo dell'app
                     VStack(spacing: 8) {
                         Text("Welcome")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                            .font(.system(size: 48, weight: .bold))
                             .foregroundColor(.white)
+                        
                         
                         Text("Enter a nickname to continue")
                             .font(.subheadline)
@@ -124,16 +124,12 @@ struct LoginView: View {
                     
                     // Logo dell'app
                     VStack(spacing: 12) {
-                        // da sostituire con il logo
-                        Image(systemName: "app.badge.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.white.opacity(0.8))
-
+                        Image("logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 100, height: 100)
+                            .scaleEffect(2.5)
                         
-                        Text("Freeagle")
-                            .font(.title3)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white.opacity(0.8))
                     }
                     
                     Spacer()
@@ -152,32 +148,34 @@ struct LoginView: View {
     }
     
     private func fetchUserByUsername(_ username: String) {
-            isLoading = true
-            errorMessage = nil
-            
-            Task {
-                do {
-                    let fetchedUser = try await userService.getUserByUsername(username: username)
-                    //print(fetchedUser as Any)
-                    if fetchedUser == nil {
-                        UserDefaults.standard.set(username, forKey: "username")
-                        self.isLoggedIn = true
-                    }else{
-                        self.errorMessage = "Username already taken"
-                    }
-                    await MainActor.run {
-                        self.user = fetchedUser
-                        self.isLoading = false
-                    }
-                } catch {
-                    await MainActor.run {
-                        errorMessage = error.localizedDescription
-                        print(self.errorMessage ?? "no")
-                        self.isLoading = false
-                    }
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                //let fetchedUser = try await userService.getUserByUsername(username: username)
+                let isUsernameTaken = try await api.getUser(username: username)
+                print("risultato prova: \(isUsernameTaken)")
+                print(isUsernameTaken)
+                if isUsernameTaken {
+                    self.errorMessage = "Username already taken"
+                } else {
+                    UserDefaults.standard.set(username, forKey: "username")
+                    try await api.setUser(username: username)
+                    self.isLoggedIn = true
+                }
+                await MainActor.run {
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    print(self.errorMessage ?? "no")
+                    self.isLoading = false
                 }
             }
         }
+    }
     
     private func limitText(_ upper: Int) {
         if username.count > upper {
@@ -192,12 +190,12 @@ extension View {
         when shouldShow: Bool,
         alignment: Alignment = .leading,
         @ViewBuilder placeholder: () -> Content) -> some View {
-        
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
+            
+            ZStack(alignment: alignment) {
+                placeholder().opacity(shouldShow ? 1 : 0)
+                self
+            }
         }
-    }
 }
 
 #Preview {

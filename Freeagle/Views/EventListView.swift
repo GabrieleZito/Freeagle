@@ -8,12 +8,13 @@ struct EventListView: View {
     @State private var categoriesFilterActive = false
     @State private var showingCategoryFilter = false
     @State private var showingCalendarPicker = false
-    @State private var selectedCategories: Set<EventCategory> = [] // Deselezionate di default
+    @State private var selectedCategories: Set<EventCategory> = []
     @State private var selectedDate = Date()
     @State private var calendarFilterActive = false
     @State private var selectedTime = Date()
     @State private var showingEventDetail = false
     @State private var selectedEvent: Event?
+    @State private var showEventDetail = false
 
     private let api = APIService()
 
@@ -23,7 +24,7 @@ struct EventListView: View {
         case nearby = "Vicini"
         case favorites = "Preferiti"
         case calendar = "Calendario"
-        
+
         var icon: String {
             switch self {
             case .all: return "square.grid.2x2"
@@ -32,10 +33,9 @@ struct EventListView: View {
             case .favorites: return "heart.fill"
             case .calendar: return "calendar"
             }
-       
         }
     }
-    
+
     enum EventCategory: String, CaseIterable {
         case music = "Musica"
         case food = "Cibo e Bevande"
@@ -44,7 +44,7 @@ struct EventListView: View {
         case nightlife = "Vita Notturna"
         case business = "Business"
         case outdoor = "All'aperto"
-        
+
         var icon: String {
             switch self {
             case .music: return "music.note"
@@ -56,7 +56,7 @@ struct EventListView: View {
             case .outdoor: return "leaf.fill"
             }
         }
-        
+
         var color: Color {
             switch self {
             case .music: return .purple
@@ -69,52 +69,32 @@ struct EventListView: View {
             }
         }
     }
-    
+
     var body: some View {
         NavigationView {
-            VStack {
-                if isLoading {
-                    ProgressView("Loading events...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let errorMessage = errorMessage {
-                    VStack {
-                        Text("Error: \(errorMessage)")
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.center)
-                        
-                        Button("Retry") {
-                            fetchEvents()
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    mainBody
+            mainBody
+                .onAppear {
+                    fetchEvents()
+                    
                 }
-            }
-            .onAppear {
-                fetchEvents()
-            }
-            .refreshable {
-                fetchEvents()
-            }
+                .refreshable { fetchEvents() }
         }
     }
-    
-    private var mainBody: some View{
+
+    private var mainBody: some View {
         VStack(spacing: 0) {
-            // Header con titolo e profilo
+            // Header: Titolo + Filtri
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("Events in Palermo")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
-                        .animation(.easeInOut(duration: 0.3))
-                    
+                        .animation(.easeInOut(duration: 0.3), value: selectedFilter)
+
                     Spacer()
-                    
-                    Button(action: {}) {
+
+                    Button(action: { showEventDetail = true }) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.title2)
                             .foregroundColor(.blue)
@@ -123,34 +103,53 @@ struct EventListView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
-                
-                // Filtri (solo per Events)
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(FilterType.allCases, id: \.self) { filter in
-                                FilterButton(
-                                    filter: filter,
-                                    isSelected: getFilterSelectionState(filter)
-                                ) {
-                                    handleFilterSelection(filter)
-                                }
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(FilterType.allCases, id: \.self) { filter in
+                            FilterButton(
+                                filter: filter,
+                                isSelected: getFilterSelectionState(filter)
+                            ) {
+                                handleFilterSelection(filter)
                             }
                         }
-                        .padding(.horizontal, 20)
                     }
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                
+                    .padding()
+                }
             }
             .background(Color(.systemBackground))
             .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
-            
-            NavigationStack {
-                ScrollView {
+
+            // Contenuto: eventi, skeleton o errore
+            ScrollView {
+                if isLoading {
+                    LazyVStack(spacing: 16) {
+                        ForEach(0..<5, id: \.self) { _ in
+                            SkeletonCardView()
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
+                } else if let errorMessage = errorMessage {
+                    VStack {
+                        Text("Errore: \(errorMessage)")
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding()
+
+                        Button("Riprova") {
+                            fetchEvents()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
                     LazyVStack(spacing: 16) {
                         ForEach(events, id: \.id) { event in
                             Button(action: {
                                 selectedEvent = event
-                                showingEventDetail = true
+                                // showingEventDetail = true
                             }) {
                                 EventCard(event: event)
                             }
@@ -160,60 +159,56 @@ struct EventListView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 20)
                 }
-                .navigationBarHidden(true)
             }
-            
-            
+            .navigationBarHidden(true)
         }
         .background(Color(.systemGroupedBackground))
         .sheet(isPresented: $showingCategoryFilter) {
             CategoryFilterView(selectedCategories: $selectedCategories) { hasSelection in
                 categoriesFilterActive = hasSelection
-                if hasSelection {
-                    selectedFilter = .category
-                } else {
-                    selectedFilter = .all
-                }
             }
         }
-        .sheet(isPresented: $showingCalendarPicker) { // Calendario a mezzo schermo
+        .sheet(isPresented: $showingCalendarPicker) {
             CalendarPickerView(selectedDate: $selectedDate) {
                 selectedFilter = .calendar
                 calendarFilterActive = true
             }
         }
     }
-    
+
     private func fetchEvents() {
         isLoading = true
         errorMessage = nil
-        
+
         Task {
             do {
-                let fetchedEvents = try await api.fetchEvents()
-                
+                //let fetchedEvents = try await api.fetchEvents()
+                let x = try await api.fetchEvents2()
+                //print(x)
                 await MainActor.run {
-                    self.events = fetchedEvents
+                    self.events = x.results
                     self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
-                    self.isLoading = false
+                    //self.isLoading = false
                 }
             }
         }
     }
+
     private func getFilterSelectionState(_ filter: FilterType) -> Bool {
         switch filter {
         case .category:
-            return categoriesFilterActive && selectedCategories.count > 0
+            return categoriesFilterActive && !selectedCategories.isEmpty
         case .calendar:
             return calendarFilterActive
         default:
             return selectedFilter == filter && !categoriesFilterActive && !calendarFilterActive
         }
     }
+
     private func handleFilterSelection(_ filter: FilterType) {
         switch filter {
         case .category:
@@ -222,15 +217,10 @@ struct EventListView: View {
             showingCalendarPicker = true
         default:
             selectedFilter = filter
-            categoriesFilterActive = false // Reset filtro categorie quando si seleziona altro
-            calendarFilterActive = false // Reset filtro calendario quando si seleziona altro
-            // Reset selezioni specifiche quando si cambia filtro
-            if filter != .category {
-                selectedCategories.removeAll()
-            }
-            if filter != .calendar {
-                selectedDate = Date() // Reset data quando si cambia filtro
-            }
+            categoriesFilterActive = false
+            calendarFilterActive = false
+            selectedCategories.removeAll()
+            selectedDate = Date()
         }
     }
 }

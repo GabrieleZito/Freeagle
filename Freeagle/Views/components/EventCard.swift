@@ -10,10 +10,10 @@ struct EventCard: View {
     let event: Event
     
     var body: some View {
-        NavigationLink(destination: EventDetailView()){
+        NavigationLink(destination: EventDetailView(event: event)){
             HStack(spacing: 16) {
                 // Immagine con shadow e corner radius
-                Image("photo.file")
+                Image("sport")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 120, height: 90)
