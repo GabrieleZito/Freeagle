@@ -65,6 +65,14 @@ struct AddEventCard: View {
     
     private func handleContinue() {
         print("Continue with: \(textInput)")
+        Task{
+            do{
+                let result = try await api.searchEvent(inviteCode: textInput)
+                print(result)
+            }catch{
+                print(error)
+            }
+        }
         dismiss()
     }
 }
