@@ -94,12 +94,7 @@ struct EventListView: View {
 
                     Spacer()
 
-                    Button(action: { showEventDetail = true }) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                            .scaleEffect(1.5)
-                    }
+                    
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)

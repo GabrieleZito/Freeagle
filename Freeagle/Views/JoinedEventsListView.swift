@@ -66,19 +66,26 @@ struct JoinedEventsListView: View {
             .background(Color(.systemBackground))
             .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
             
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(joinedEvents, id: \.id) { event in
-                        NavigationLink(destination: EventDetailView2(event: event)) {
-                            EventCardGroups(event: event)
+            if joinedEvents.count > 0{
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(joinedEvents, id: \.id) { event in
+                            NavigationLink(destination: EventDetailView2(event: event)) {
+                                EventCardGroups(event: event)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 20)
+                //.navigationBarHidden(true)
+            }else {
+                Spacer()
+                Text("You haven't joined any events yet")
+                Spacer()
             }
-            //.navigationBarHidden(true)
+            
             
             
         }
@@ -93,7 +100,7 @@ struct JoinedEventsListView: View {
         guard let data = UserDefaults.standard.data(forKey: "userEvents") else {
             // No data found
             joinedEvents = []
-            errorMessage = "No joined events found"
+            //errorMessage = "No joined events found"
             return
         }
         
@@ -104,7 +111,7 @@ struct JoinedEventsListView: View {
             if events.isEmpty {
                 // Array exists but is empty
                 joinedEvents = []
-                errorMessage = "No joined events found"
+                //errorMessage = "No joined events found"
             } else {
                 // Events found
                 isLoading = false
