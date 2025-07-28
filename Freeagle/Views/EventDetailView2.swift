@@ -7,28 +7,7 @@ struct EventDetailView2: View {
     @State private var isFavorite: Bool = false
     @State var users: [User] = []
     var api = APIService()
-    
-    // Modello per i partecipanti
-    struct Participant {
-        let id = UUID()
-        let name: String
-        let username: String
-        let profileImage: String
-        let isOnline: Bool
-    }
-    
-    // Dati di esempio
-    let sampleParticipants = [
-        Participant(name: "Marco Rossi", username: "@marcorossi", profileImage: "person.circle.fill", isOnline: true),
-        Participant(name: "Sofia Bianchi", username: "@sofiab", profileImage: "person.circle.fill", isOnline: true),
-        Participant(name: "Luca Verdi", username: "@lucav", profileImage: "person.circle.fill", isOnline: false),
-        Participant(name: "Anna Neri", username: "@annan", profileImage: "person.circle.fill", isOnline: true),
-        Participant(name: "Giulio Romano", username: "@giulior", profileImage: "person.circle.fill", isOnline: false),
-        Participant(name: "Elena Conte", username: "@elenac", profileImage: "person.circle.fill", isOnline: true),
-        Participant(name: "Davide Moretti", username: "@davidem", profileImage: "person.circle.fill", isOnline: false),
-        Participant(name: "Chiara Ferrari", username: "@chiaraf", profileImage: "person.circle.fill", isOnline: true)
-    ]
-    
+
     // Vista per ogni partecipante
     struct ParticipantRow: View {
         let participant: User
@@ -37,12 +16,12 @@ struct EventDetailView2: View {
             HStack(spacing: 12) {
                 
                 // Informazioni utente
-                VStack(alignment: .leading, spacing: 2) {
+                HStack() {
                     Text(participant.username)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    Text(participant.participate)
+                    Text(participant.participate == "true" ? " joined the event": "")
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.secondary)
                 }
@@ -60,7 +39,7 @@ struct EventDetailView2: View {
         VStack(spacing: 0) {
             // Header fisso con immagine hero
             ZStack(alignment: .topLeading) {
-                Image("sport")
+                Image(event.category)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 300)
@@ -91,7 +70,7 @@ struct EventDetailView2: View {
                     InfoCard(
                         icon: "calendar",
                         title: "Date",
-                        subtitle: event.start_local,
+                        subtitle: formatDateString(event.start_local),
                         color: .blue
                     )
                     
@@ -220,6 +199,21 @@ struct EventDetailView2: View {
                 users = x.users ?? []
             }
         }
+    }
+    func formatDateString(_ dateString: String) -> String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "en_US")
+        
+        guard let date = inputFormatter.date(from: dateString) else {
+            return dateString // Return original if parsing fails
+        }
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "MMMM d, yyyy 'at' h:mm a"
+        outputFormatter.locale = Locale(identifier: "en_US")
+        
+        return outputFormatter.string(from: date)
     }
 }
 

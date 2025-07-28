@@ -95,7 +95,7 @@ struct EventDetailView3: View {
                     InfoCard(
                         icon: "calendar",
                         title: "Date",
-                        subtitle: event.start_local,
+                        subtitle: formatDateString(event.start_local),
                         color: .blue
                     )
                 }
@@ -216,12 +216,51 @@ struct EventDetailView3: View {
         
     }
     
+    func formatDateString(_ dateString: String) -> String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "en_US")
+        
+        guard let date = inputFormatter.date(from: dateString) else {
+            return dateString // Return original if parsing fails
+        }
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "MMMM d, yyyy 'at' h:mm a"
+        outputFormatter.locale = Locale(identifier: "en_US")
+        
+        return outputFormatter.string(from: date)
+    }
+    
     func handleSubmit(inviteCode: String, username: String, accepted: String){
         Task{
             do{
                 let result = try await api.confirmEvent(inviteCode: inviteCode, username: username, confirmed: accepted)
                 print(result)
                 if result{
+                    var events: [Event] = []
+                    if let data = UserDefaults.standard.data(forKey: "userEvents") {
+                        do {
+                            events = try JSONDecoder().decode([Event].self, from: data)
+                        } catch {
+                            print("Error decoding events: \(error)")
+                            events = []
+                        }
+                    }
+                    let existingEvent = events.first { $0.inviteCode == inviteCode }
+                    if existingEvent == nil{
+                        events.append(event)
+                        
+                        // Save back to UserDefaults (encode to Data)
+                        do {
+                            let data = try JSONEncoder().encode(events)
+                            UserDefaults.standard.set(data, forKey: "userEvents")
+                            print("Successfully saved events to UserDefaults")
+                            
+                        } catch {
+                            print("Error encoding events: \(error)")
+                        }
+                    }
                     dismiss()
                 }else{
                     print("error")
@@ -231,6 +270,7 @@ struct EventDetailView3: View {
             }
         }
     }
+    
     func handleAddEvent() {
         let inviteCode = "\(event.id)-\(username)"
         

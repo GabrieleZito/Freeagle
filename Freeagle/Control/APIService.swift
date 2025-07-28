@@ -108,7 +108,7 @@ struct APIService {
     }
     
     func fetchEvents2() async throws -> PHQResponse{
-        let apiKey = "x7ucXBvt0rr7VF-D7ctX_ZWoauc4miToT-RbyJis"
+        let apiKey = "m9G-Im4ioKRKf6dLqbSEATklzE5wLs3uqaLh53-N"
         
         // Add the trailing slash that the server expects
         let apiURL = "https://api.predicthq.com/v1/events/?country=IT&place.scope=PMO&category=conferences,expos,concerts,festivals,performing-arts,sports,community&limit=100"

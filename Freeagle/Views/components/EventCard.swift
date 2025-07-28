@@ -26,14 +26,12 @@ struct EventCard: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
-                        .multilineTextAlignment(.leading)
-                    
-                    HStack {
-                        Image(systemName: "location.fill")
+                        .multilineTextAlignment(.leading)  
+                    HStack{
+                        Image(systemName: "calendar")
                             .font(.caption)
                             .foregroundColor(.blue)
-                        
-                        Text("Palermo, Sicily")
+                        Text(formatDateString(event.start_local))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -55,5 +53,20 @@ struct EventCard: View {
             )
 
         }
+    }
+    func formatDateString(_ dateString: String) -> String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        inputFormatter.locale = Locale(identifier: "en_US")
+        
+        guard let date = inputFormatter.date(from: dateString) else {
+            return dateString // Return original if parsing fails
+        }
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "MMMM d, yyyy"
+        outputFormatter.locale = Locale(identifier: "en_US")
+        
+        return outputFormatter.string(from: date)
     }
 }

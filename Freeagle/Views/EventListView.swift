@@ -15,15 +15,16 @@ struct EventListView: View {
     @State private var showingEventDetail = false
     @State private var selectedEvent: Event?
     @State private var showEventDetail = false
+    @State private var favoriteEventIds: Set<String> = []
 
     private let api = APIService()
 
     enum FilterType: String, CaseIterable {
-        case all = "Tutti"
-        case category = "Categoria"
-        case nearby = "Vicini"
-        case favorites = "Preferiti"
-        case calendar = "Calendario"
+        case all = "All"
+        case category = "Categories"
+        case nearby = "Nearby"
+        case favorites = "Favorites"
+        case calendar = "Calendar"
 
         var icon: String {
             switch self {
@@ -37,36 +38,99 @@ struct EventListView: View {
     }
 
     enum EventCategory: String, CaseIterable {
-        case music = "Musica"
-        case food = "Cibo e Bevande"
-        case art = "Arte e Cultura"
-        case sport = "Sport"
-        case nightlife = "Vita Notturna"
-        case business = "Business"
-        case outdoor = "All'aperto"
+        case concert = "Concerts"
+        case festival = "Festivals"
+        case sport = "Sports"
+        case community = "Communities"
+        case expo = "Expos"
+        case conference = "Conferences"
+        case permformingArt = "Performing Arts"
 
         var icon: String {
             switch self {
-            case .music: return "music.note"
-            case .food: return "fork.knife"
-            case .art: return "paintbrush.fill"
-            case .sport: return "figure.run"
-            case .nightlife: return "moon.stars.fill"
-            case .business: return "briefcase.fill"
-            case .outdoor: return "leaf.fill"
+            case .concert: return "music.note"
+            case .festival: return "party.popper.fill"
+            case .sport: return "soccerball"
+            case .community: return "figure.2"
+            case .expo: return "globe.europe.africa.fill"
+            case .conference: return "briefcase.fill"
+            case .permformingArt: return "theatermask.and.paintbrush.fill"
             }
         }
 
         var color: Color {
             switch self {
-            case .music: return .purple
-            case .food: return .orange
-            case .art: return .pink
-            case .sport: return .green
-            case .nightlife: return .indigo
-            case .business: return .blue
-            case .outdoor: return .mint
+            case .concert: return .purple
+            case .festival: return .orange
+            case .sport: return .pink
+            case .community: return .green
+            case .expo: return .indigo
+            case .conference: return .blue
+            case .permformingArt: return .mint
             }
+        }
+    }
+
+    private var filteredEvents: [Event] {
+        // Filtra per preferiti
+        if selectedFilter == .favorites {
+            return events.filter { event in
+                favoriteEventIds.contains(event.id)
+            }
+        }
+        
+        // Filtra per categorie
+        guard categoriesFilterActive && !selectedCategories.isEmpty else {
+            return events
+        }
+        
+        return events.filter { event in
+            // Corrispondenza esatta con rawValue
+            if let eventCategory = EventCategory(rawValue: event.category) {
+                return selectedCategories.contains(eventCategory)
+            }
+            
+            // Corrispondenza case-insensitive
+            let eventCategoryLower = event.category.lowercased()
+            for selectedCategory in selectedCategories {
+                if selectedCategory.rawValue.lowercased() == eventCategoryLower {
+                    return true
+                }
+                
+                // Keyword matching per categorie con nomi diversi
+                switch selectedCategory {
+                case .concert:
+                    if eventCategoryLower.contains("music") || eventCategoryLower.contains("concert") {
+                        return true
+                    }
+                case .festival:
+                    if eventCategoryLower.contains("festival") || eventCategoryLower.contains("party") {
+                        return true
+                    }
+                case .sport:
+                    if eventCategoryLower.contains("sport") || eventCategoryLower.contains("game") {
+                        return true
+                    }
+                case .community:
+                    if eventCategoryLower.contains("community") || eventCategoryLower.contains("social") {
+                        return true
+                    }
+                case .expo:
+                    if eventCategoryLower.contains("expo") || eventCategoryLower.contains("exhibition") {
+                        return true
+                    }
+                case .conference:
+                    if eventCategoryLower.contains("conference") || eventCategoryLower.contains("meeting") {
+                        return true
+                    }
+                case .permformingArt:
+                    if eventCategoryLower.contains("art") || eventCategoryLower.contains("theater") || eventCategoryLower.contains("performance") {
+                        return true
+                    }
+                }
+            }
+            
+            return false
         }
     }
 
@@ -75,9 +139,12 @@ struct EventListView: View {
             mainBody
                 .onAppear {
                     fetchEvents()
-                    
+                    loadFavorites()
                 }
-                .refreshable { fetchEvents() }
+                .refreshable {
+                    fetchEvents()
+                    loadFavorites()
+                }
         }
     }
 
@@ -94,7 +161,16 @@ struct EventListView: View {
 
                     Spacer()
 
-                    
+                    // Mostra il numero di eventi filtrati se ci sono filtri attivi
+//                    if categoriesFilterActive && !selectedCategories.isEmpty {
+//                        Text("\(filteredEvents.count) eventi")
+//                            .font(.caption)
+//                            .foregroundColor(.secondary)
+//                            .padding(.horizontal, 8)
+//                            .padding(.vertical, 4)
+//                            .background(Color.secondary.opacity(0.1))
+//                            .clipShape(Capsule())
+//                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
@@ -110,7 +186,31 @@ struct EventListView: View {
                             }
                         }
                     }
-                    .padding()
+                    .padding(.leading, 10)
+                    .padding(.bottom, 10)
+                }
+                
+                // Mostra le categorie selezionate se il filtro è attivo
+                if categoriesFilterActive && !selectedCategories.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(Array(selectedCategories), id: \.self) { category in
+                                HStack(spacing: 4) {
+                                    Image(systemName: category.icon)
+                                        .font(.caption)
+                                    Text(category.rawValue)
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(category.color.opacity(0.2))
+                                .foregroundColor(category.color)
+                                .clipShape(Capsule())
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }.padding(.bottom, 10)
                 }
             }
             .background(Color(.systemBackground))
@@ -140,19 +240,49 @@ struct EventListView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    LazyVStack(spacing: 16) {
-                        ForEach(events, id: \.id) { event in
-                            Button(action: {
-                                selectedEvent = event
-                                // showingEventDetail = true
-                            }) {
-                                EventCard(event: event)
+                    // Mostra messaggio se non ci sono eventi dopo il filtro
+                    if filteredEvents.isEmpty && ((categoriesFilterActive && !selectedCategories.isEmpty) || selectedFilter == .favorites) {
+                        VStack(spacing: 16) {
+                            Image(systemName: selectedFilter == .favorites ? "heart" : "magnifyingglass")
+                                .font(.system(size: 50))
+                                .foregroundColor(.secondary)
+                            
+                            Text(selectedFilter == .favorites ? "Nessun preferito" : "Nessun evento trovato")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            
+                            Text(selectedFilter == .favorites ? "Non hai ancora aggiunto eventi ai preferiti" : "Non ci sono eventi per le categorie selezionate")
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                            
+                            Button("Rimuovi filtri") {
+                                selectedCategories.removeAll()
+                                categoriesFilterActive = false
+                                selectedFilter = .all
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .buttonStyle(.borderedProminent)
                         }
+                        .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        LazyVStack(spacing: 16) {
+                            ForEach(filteredEvents.reversed()   , id: \.id) { event in
+                                if compareEventDateWithToday(event.start_local) == .orderedDescending{
+                                    Button(action: {
+                                        selectedEvent = event
+                                        // showingEventDetail = true
+                                    }) {
+                                        EventCard(event: event)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 20)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 20)
                 }
             }
             .navigationBarHidden(true)
@@ -192,6 +322,34 @@ struct EventListView: View {
             }
         }
     }
+    
+    private func loadFavorites() {
+        // Carica i preferiti dal UserDefaults o dal tuo sistema di persistenza
+        if let favoritesData = UserDefaults.standard.data(forKey: "favoriteEvents"),
+           let favorites = try? JSONDecoder().decode(Set<String>.self, from: favoritesData) {
+            favoriteEventIds = favorites
+        }
+    }
+    
+    private func saveFavorites() {
+        // Salva i preferiti nel UserDefaults o nel tuo sistema di persistenza
+        if let encoded = try? JSONEncoder().encode(favoriteEventIds) {
+            UserDefaults.standard.set(encoded, forKey: "favoriteEvents")
+        }
+    }
+    
+    func toggleFavorite(eventId: String) {
+        if favoriteEventIds.contains(eventId) {
+            favoriteEventIds.remove(eventId)
+        } else {
+            favoriteEventIds.insert(eventId)
+        }
+        saveFavorites()
+    }
+    
+    func isFavorite(eventId: String) -> Bool {
+        return favoriteEventIds.contains(eventId)
+    }
 
     private func getFilterSelectionState(_ filter: FilterType) -> Bool {
         switch filter {
@@ -217,6 +375,17 @@ struct EventListView: View {
             selectedCategories.removeAll()
             selectedDate = Date()
         }
+    }
+    
+    func compareEventDateWithToday(_ eventDateString: String, today: Date = Date()) -> ComparisonResult {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        
+        guard let eventDate = formatter.date(from: eventDateString) else {
+            return .orderedSame
+        }
+        
+        return eventDate.compare(today)
     }
 }
 
