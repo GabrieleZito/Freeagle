@@ -46,6 +46,10 @@ struct APIService {
         let (_, _) = try await URLSession.shared.data(from: url)
     }
     
+    func confirmEvent(inviteCode: String){
+        //let url
+    }
+    
     func searchEvent(inviteCode: String) async throws -> Event{
         let url = URL(string: "\(baseURL)/events/\(inviteCode)")!
         let (data, _) = try await URLSession.shared.data(from: url)

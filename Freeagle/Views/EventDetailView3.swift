@@ -3,6 +3,7 @@ import SwiftUI
 struct EventDetailView3: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inviteStatus: InviteStatus = .pending
+    @State var event: Event
     
     enum InviteStatus {
         case pending, accepted, declined
@@ -43,7 +44,7 @@ struct EventDetailView3: View {
         VStack(spacing: 0) {
             // Header fisso con immagine hero
             ZStack(alignment: .topLeading) {
-                Image("palermo")
+                Image("sport")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 300)
@@ -64,17 +65,7 @@ struct EventDetailView3: View {
                         .padding(.vertical, 8)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
                     }
-                    
                     Spacer()
-                    
-                    // Share button
-                    Button(action: {}) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 40, height: 40)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
                 }
                 .padding(.top, 50)
                 .padding(.horizontal, 40)
@@ -83,7 +74,7 @@ struct EventDetailView3: View {
             // Informazioni evento fisse
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Event Name")
+                    Text(event.title)
                         .font(.system(size: 30, weight: .bold, design: .default))
                         .foregroundColor(.primary)
                     
@@ -91,7 +82,7 @@ struct EventDetailView3: View {
                         Image(systemName: "location.fill")
                             .foregroundColor(.secondary)
                             .font(.system(size: 14))
-                        Text("Event Place")
+                        Text(event.geo.address.formatted_address)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.secondary)
                     }
@@ -129,7 +120,7 @@ struct EventDetailView3: View {
                         .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.primary)
                     
-                    Text("Lorem ipsum dolor sit amet. Qui minus explicabo ex ducimus mollitia aut praesentium culpa eos ipsa cupiditate et quod alias et corrupti asperiores hic esse aspernatur. Et voluptas quam aut voluptates rerum ut possimus repudiandae sed aliquid earum est labore commodi rem dolorem blanditiis. Sed nobis voluptates eum deserunt quae et esse velit eum placeat veritatis ut repellat numquam aut nobis labore. Eos culpa eveniet sed vitae galisum qui dolor dolorum aut perferendis adipisci et distinctio maxime ex praesentium maiores est tempora voluptatem? Quo aperiam maiores est natus ullam rem animi voluptate aut suscipit assumenda ea voluptatem dolor et voluptate maiores! Ad optio nihil rem corrupti rerum ut laudantium deleniti et magnam commodi..")
+                    Text(event.description)
                         .font(.system(size: 16, weight: .regular))
                         .foregroundColor(.black)
                         .lineSpacing(4)
@@ -160,6 +151,7 @@ struct EventDetailView3: View {
                 HStack(spacing: 12) {
                     // Pulsante Rifiuta
                     Button(action: {
+                        //print(event)
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                             inviteStatus = .declined
                         }
@@ -187,6 +179,7 @@ struct EventDetailView3: View {
                     
                     // Pulsante Accetta
                     Button(action: {
+                        //print(event)
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                             inviteStatus = .accepted
                         }
@@ -214,19 +207,6 @@ struct EventDetailView3: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // Pulsante per cambiare risposta
-                if inviteStatus != .pending {
-                    Button(action: {
-                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                            inviteStatus = .pending
-                        }
-                    }) {
-                        Text("Change Response")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.blue)
-                    }
-                    .transition(.opacity.combined(with: .scale))
-                }
             }
             .padding(.bottom, 10)
             .padding(.top, 20)
@@ -241,6 +221,6 @@ struct EventDetailView3: View {
 
 
 
-#Preview {
-    EventDetailView3()
-}
+//#Preview {
+//    EventDetailView3()
+//}
