@@ -15,12 +15,11 @@ struct EventDetailView: View {
         VStack(spacing: 0) {
             // Header fisso con immagine hero
             ZStack(alignment: .topLeading) {
-                Image("sport")
+                Image(event.category)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 300)
                     .clipped()
-                
                     .padding(.horizontal, 40)
             }
             .ignoresSafeArea(edges: .top)

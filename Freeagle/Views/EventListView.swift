@@ -151,7 +151,7 @@ struct EventListView: View {
                                 selectedEvent = event
                                 // showingEventDetail = true
                             }) {
-                                EventCard(event: event, isJoinedEvent: false)
+                                EventCard(event: event)
                             }
                             .buttonStyle(PlainButtonStyle())
                         }

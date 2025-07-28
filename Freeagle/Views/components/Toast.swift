@@ -25,11 +25,8 @@ struct Toast: View {
                                 .fontWeight(.semibold)
                                 .multilineTextAlignment(.leading)
                         }
-                        
                         Text(message)
                             .multilineTextAlignment(.leading)
-                        
-                        
                     }
                 }
                 .padding(.vertical, 12)
@@ -40,7 +37,7 @@ struct Toast: View {
             }
         }
         .padding(.top, 50)
-
+        
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
         .animation(.linear(duration: 0.15), value: isShown)
         

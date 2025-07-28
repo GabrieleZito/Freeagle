@@ -1,16 +1,17 @@
 //
-//  EventCard.swift
+//  EventCardGroups.swift
 //  Freeagle
 //
-//  Created by Gabriele Zito on 24/07/25.
+//  Created by Gabriele Zito on 28/07/25.
 //
+
 import SwiftUI
 
-struct EventCard: View {
+struct EventCardGroups: View {
     let event: Event
     
     var body: some View {
-        NavigationLink(destination: EventDetailView(event: event)){
+        NavigationLink(destination: EventDetailView2(event: event)){
             HStack(spacing: 16) {
                 // Immagine con shadow e corner radius
                 Image(event.category)
@@ -37,6 +38,7 @@ struct EventCard: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    
                     Spacer()
                 }
                 

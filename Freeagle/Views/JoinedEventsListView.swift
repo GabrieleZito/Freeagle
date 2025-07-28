@@ -5,8 +5,6 @@ struct JoinedEventsListView: View {
     @State private var joinedEvents: [Event] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var showingEventDetail = false
-    @State private var selectedEvent: Event?
     @State private var showAddEvent = false
     
     private let api = APIService()
@@ -62,34 +60,25 @@ struct JoinedEventsListView: View {
                             .scaleEffect(1.5)
                     }
                 }
-                
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
-                
-                
-                
             }
             .background(Color(.systemBackground))
             .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
             
-            NavigationStack {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(joinedEvents, id: \.id) { event in
-                            Button(action: {
-                                selectedEvent = event
-                                showingEventDetail = true
-                            }) {
-                                EventCard(event: event, isJoinedEvent: true)
-                            }
-                            .buttonStyle(PlainButtonStyle())
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    ForEach(joinedEvents, id: \.id) { event in
+                        NavigationLink(destination: EventDetailView2(event: event)) {
+                            EventCardGroups(event: event)
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 20)
                 }
-                .navigationBarHidden(true)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
             }
+            //.navigationBarHidden(true)
             
             
         }

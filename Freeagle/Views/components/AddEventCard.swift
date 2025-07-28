@@ -6,7 +6,7 @@ struct AddEventCard: View {
     @State private var errorMessage: String?
     @State private var foundEvent: Event?
     @State private var showEventDetail = false
-
+    
     
     @Environment(\.dismiss) private var dismiss
     private var api = APIService()
@@ -23,7 +23,6 @@ struct AddEventCard: View {
                         }){
                             Image(systemName: "x.circle")
                         }
-                        
                     }
                     Text("Enter Invite Code")
                         .font(.title2)

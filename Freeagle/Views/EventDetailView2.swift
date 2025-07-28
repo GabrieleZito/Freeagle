@@ -3,6 +3,10 @@ import SwiftUI
 struct EventDetailView2: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isDetailsExpanded = true
+    @State var event: Event
+    @State private var isFavorite: Bool = false
+    @State var users: [User] = []
+    var api = APIService()
     
     // Modello per i partecipanti
     struct Participant {
@@ -27,50 +31,23 @@ struct EventDetailView2: View {
     
     // Vista per ogni partecipante
     struct ParticipantRow: View {
-        let participant: Participant
+        let participant: User
         
         var body: some View {
             HStack(spacing: 12) {
-                // Avatar del partecipante
-                ZStack(alignment: .bottomTrailing) {
-                    Image(systemName: participant.profileImage)
-                        .font(.system(size: 32))
-                        .foregroundColor(.blue)
-                        .frame(width: 50, height: 50)
-                        .background(Color.blue.opacity(0.1))
-                        .clipShape(Circle())
-                    
-                    // Indicatore online
-                    if participant.isOnline {
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: 14, height: 14)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 2)
-                            )
-                    }
-                }
                 
                 // Informazioni utente
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(participant.name)
+                    Text(participant.username)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    Text(participant.username)
+                    Text(participant.participate)
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.secondary)
                 }
                 
                 Spacer()
-                
-                // Bottone messaggio
-                Button(action: {}) {
-                    Image(systemName: "message.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(.blue)
-                }
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
@@ -79,110 +56,61 @@ struct EventDetailView2: View {
         }
     }
     
-    struct InfoCard: View {
-        let icon: String
-        let title: String
-        let subtitle: String
-        let color: Color
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Image(systemName: icon)
-                        .foregroundColor(color)
-                        .font(.system(size: 16, weight: .semibold))
-                    Text(title)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(color)
-                }
-                
-                Text(subtitle)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.primary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(color.opacity(0.2), lineWidth: 1)
-            )
-        }
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             // Header fisso con immagine hero
             ZStack(alignment: .topLeading) {
-                Image("palermo")
+                Image("sport")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 300)
                     .clipped()
-
-                
-                // Back button personalizzato
-                HStack {
-                    Button(action: { dismiss() }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 16, weight: .semibold))
-                            Text("Back")
-                                .font(.system(size: 16, weight: .medium))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-                    }
-                    
-                    Spacer()
-                    
-                    // Share button
-                    Button(action: {}) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 40, height: 40)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                }
-                .padding(.top, 50)
-                .padding(.horizontal, 40)
+                    .padding(.horizontal, 40)
             }
+            .ignoresSafeArea(edges: .top)
             
             // Informazioni evento fisse
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Event Name")
-                        .font(.system(size: 28, weight: .bold, design: .default))
+                    Text(event.title)
+                        .font(.system(size: 30, weight: .bold, design: .default))
                         .foregroundColor(.primary)
                     
                     HStack(spacing: 6) {
                         Image(systemName: "location.fill")
                             .foregroundColor(.secondary)
                             .font(.system(size: 14))
-                        Text("Event Place")
+                        Text(event.geo.address.formatted_address)
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.secondary)
                     }
                 }
                 
                 // Info cards
-                HStack(spacing: 12) {
+                HStack(spacing:15) {
                     InfoCard(
                         icon: "calendar",
                         title: "Date",
-                        subtitle: "Event Date",
+                        subtitle: event.start_local,
                         color: .blue
                     )
                     
-                    InfoCard(
-                        icon: "creditcard",
-                        title: "Price",
-                        subtitle: "Event Price",
-                        color: .green
-                    )
+                    Spacer()
+                    
+                    // Cuoricino per i preferiti
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isFavorite.toggle()
+                        }
+                    }) {
+                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                            .font(.system(size: 30, weight: .medium))
+                            .foregroundColor(isFavorite ? .red : .secondary)
+                            .scaleEffect(isFavorite ? 1.1 : 1.0)
+                    }
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isFavorite)
+                    
+                    Spacer()
                 }
                 
                 Divider()
@@ -219,7 +147,7 @@ struct EventDetailView2: View {
                         .buttonStyle(PlainButtonStyle())
                         
                         if isDetailsExpanded {
-                            Text("Lorem ipsum dolor sit amet. Qui minus explicabo ex ducimus mollitia aut praesentium culpa eos ipsa cupiditate et quod alias et corrupti asperiores hic esse aspernatur. Et voluptas quam aut voluptates rerum ut possimus repudiandae sed aliquid earum est labore commodi rem dolorem blanditiis. Sed nobis voluptates eum deserunt quae et esse velit eum placeat veritatis ut repellat numquam aut nobis labore. Eos culpa eveniet sed vitae galisum qui dolor dolorum aut perferendis adipisci et distinctio maxime ex praesentium maiores est tempora voluptatem? Quo aperiam maiores est natus ullam rem animi voluptate aut suscipit assumenda ea voluptatem dolor et voluptate maiores! Ad optio nihil rem corrupti rerum ut laudantium deleniti et magnam commodi..")
+                            Text(event.description)
                                 .font(.system(size: 16, weight: .regular))
                                 .foregroundColor(.black)
                                 .lineSpacing(4)
@@ -231,25 +159,28 @@ struct EventDetailView2: View {
                     }
                     
                     // Sezione partecipanti
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("Participants")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(.primary)
+                    if users.count > 0{
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("Participants")
+                                    .font(.system(size: 22, weight: .bold))
+                                    .foregroundColor(.primary)
+                                
+                                Spacer()
+                                
+                                Text("\(users.count) going")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.blue)
+                            }
                             
-                            Spacer()
-                            
-                            Text("12 going")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.blue)
-                        }
-                        
-                        LazyVStack(spacing: 12) {
-                            ForEach(sampleParticipants, id: \.id) { participant in
-                                ParticipantRow(participant: participant)
+                            LazyVStack(spacing: 12) {
+                                ForEach(users, id: \.username) { participant in
+                                    ParticipantRow(participant: participant)
+                                }
                             }
                         }
                     }
+                    
                 }
                 .padding(.horizontal, 15)
                 .padding(.top, 0)
@@ -258,10 +189,40 @@ struct EventDetailView2: View {
             .padding(.bottom, 10)
         }
         .ignoresSafeArea(edges: .top)
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {dismiss()}) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Back")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                }
+            }
+        }.onAppear{
+            getUsers()
+        }
+        
+        //.toolbar(.hidden, for: .tabBar)
+    }
+    private func getUsers() {
+        print("CIAO")
+        Task{
+            do{
+                let x = try await api.searchEvent(inviteCode: event.inviteCode!)
+                print(x.users ?? [])
+                users = x.users ?? []
+            }
+        }
     }
 }
 
 #Preview {
-    EventDetailView2()
+    EventDetailView2(event: Event(id: "", title: "", description: "", category: "", entities: [Entity(entity_id: "", name: "", type: "")], start_local: "", end_local: "", location: [1.0, 1.0], geo: Geo(address: Address(country_code: "", formatted_address: ""))))
 }
