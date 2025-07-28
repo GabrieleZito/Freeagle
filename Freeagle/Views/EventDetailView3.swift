@@ -46,7 +46,7 @@ struct EventDetailView3: View {
         VStack(spacing: 0) {
             // Header fisso con immagine hero
             ZStack(alignment: .topLeading) {
-                Image("sport")
+                Image(event.category)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 300)
@@ -228,6 +228,42 @@ struct EventDetailView3: View {
                 }
             }catch{
                 print(error)
+            }
+        }
+    }
+    func handleAddEvent() {
+        let inviteCode = "\(event.id)-\(username)"
+        
+        // Get existing events from UserDefaults (decode from Data)
+        var events: [Event] = []
+        if let data = UserDefaults.standard.data(forKey: "userEvents") {
+            do {
+                events = try JSONDecoder().decode([Event].self, from: data)
+            } catch {
+                print("Error decoding events: \(error)")
+                events = []
+            }
+        }
+        //print(events)
+        // Check if an event with this invite code already exists
+        let existingEvent = events.first { $0.inviteCode == inviteCode }
+        
+        if existingEvent != nil {
+            // Event already exists, just copy the invite code
+            print("Event already exists, copied invite code: \(inviteCode)")
+        } else {
+            // Event doesn't exist, add it to the array
+            event.inviteCode = inviteCode
+            events.append(event)
+            
+            // Save back to UserDefaults (encode to Data)
+            do {
+                let data = try JSONEncoder().encode(events)
+                UserDefaults.standard.set(data, forKey: "userEvents")
+                print("Successfully saved events to UserDefaults")
+                
+            } catch {
+                print("Error encoding events: \(error)")
             }
         }
     }
