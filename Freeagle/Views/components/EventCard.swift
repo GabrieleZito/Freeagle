@@ -8,6 +8,7 @@ import SwiftUI
 
 struct EventCard: View {
     let event: Event
+    let isJoinedEvent: Bool
     
     var body: some View {
         NavigationLink(destination: EventDetailView(event: event)){
@@ -37,7 +38,6 @@ struct EventCard: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
                     Spacer()
                 }
                 

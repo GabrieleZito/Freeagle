@@ -8,7 +8,6 @@
 import Foundation
 
 struct User: Codable{
-    var id: Int
     var username: String
-    var propic: String
+    var participate: String
 }

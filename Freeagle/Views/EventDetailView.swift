@@ -133,6 +133,7 @@ struct EventDetailView: View {
                         Image(systemName: "plus.circle")
                     }
                 }
+
             }
         }
         .toast(isShown: $showToast, message: "Invite Code Copied!")
@@ -156,7 +157,6 @@ struct EventDetailView: View {
             //Share Button
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
-                    
                     handleAddEvent()
                 }) {
                     Image(systemName: "square.and.arrow.up")
@@ -169,6 +169,7 @@ struct EventDetailView: View {
         }
         
     }
+
     func handleAddEvent() {
         let inviteCode = "\(event.id)-\(username)"
         

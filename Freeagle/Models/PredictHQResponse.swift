@@ -24,6 +24,7 @@ struct Event: Codable, Identifiable{
     var end_local: String
     var location: [Double]
     var geo: Geo
+    var users: [User]?
     
 }
 

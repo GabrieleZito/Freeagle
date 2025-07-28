@@ -46,8 +46,15 @@ struct APIService {
         let (_, _) = try await URLSession.shared.data(from: url)
     }
     
-    func confirmEvent(inviteCode: String){
-        //let url
+    func confirmEvent(inviteCode: String, username: String, confirmed: String) async throws -> Bool{
+        let url = URL(string: "\(baseURL)/events/\(inviteCode)/\(username)/\(confirmed)")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        guard let responseString = String(data: data, encoding: .utf8) else {
+            throw URLError(.cannotParseResponse)
+        }
+        
+        let boolValue = responseString.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "true"
+        return boolValue
     }
     
     func searchEvent(inviteCode: String) async throws -> Event{

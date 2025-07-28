@@ -80,7 +80,7 @@ struct JoinedEventsListView: View {
                                 selectedEvent = event
                                 showingEventDetail = true
                             }) {
-                                EventCard(event: event)
+                                EventCard(event: event, isJoinedEvent: true)
                             }
                             .buttonStyle(PlainButtonStyle())
                         }

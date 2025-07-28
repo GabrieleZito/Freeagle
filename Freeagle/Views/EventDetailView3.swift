@@ -4,7 +4,9 @@ struct EventDetailView3: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inviteStatus: InviteStatus = .pending
     @State var event: Event
-    
+    var api = APIService()
+    @State private var username = UserDefaults.standard.object(forKey: "username")!
+
     enum InviteStatus {
         case pending, accepted, declined
     }
@@ -93,15 +95,8 @@ struct EventDetailView3: View {
                     InfoCard(
                         icon: "calendar",
                         title: "Date",
-                        subtitle: "Event Date",
+                        subtitle: event.start_local,
                         color: .blue
-                    )
-                    
-                    InfoCard(
-                        icon: "creditcard",
-                        title: "Price",
-                        subtitle: "Event Price",
-                        color: .green
                     )
                 }
                 
@@ -152,6 +147,7 @@ struct EventDetailView3: View {
                     // Pulsante Rifiuta
                     Button(action: {
                         //print(event)
+                        handleSubmit(inviteCode: event.inviteCode!, username: username as! String, accepted: "false")
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                             inviteStatus = .declined
                         }
@@ -180,6 +176,8 @@ struct EventDetailView3: View {
                     // Pulsante Accetta
                     Button(action: {
                         //print(event)
+                        handleSubmit(inviteCode: event.inviteCode!, username: username as! String, accepted: "true")
+
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                             inviteStatus = .accepted
                         }
@@ -216,6 +214,22 @@ struct EventDetailView3: View {
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)
         
+    }
+    
+    func handleSubmit(inviteCode: String, username: String, accepted: String){
+        Task{
+            do{
+                let result = try await api.confirmEvent(inviteCode: inviteCode, username: username, confirmed: accepted)
+                print(result)
+                if result{
+                    dismiss()
+                }else{
+                    print("error")
+                }
+            }catch{
+                print(error)
+            }
+        }
     }
 }
 
