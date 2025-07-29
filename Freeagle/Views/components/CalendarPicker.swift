@@ -17,7 +17,7 @@ struct CalendarPickerView: View {
                 // Picker data
                 VStack(alignment: .leading, spacing: 12) {
                     DatePicker(
-                        "Data evento",
+                        "Event Date",
                         selection: $selectedDate,
                         in: Date()...,
                         displayedComponents: [.date]
@@ -34,18 +34,18 @@ struct CalendarPickerView: View {
                 Spacer()
             }
             .padding(.horizontal, 20)
-            .navigationTitle("Filtra per Data")
+            .navigationTitle("Filter by Date")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Annulla") {
+                    Button("Cancel") {
                         dismiss()
                     }
                     .fontWeight(.semibold)
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Applica") {
+                    Button("Apply") {
                         onApply()
                         dismiss()
                     }

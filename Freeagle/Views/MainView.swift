@@ -13,10 +13,10 @@ struct MainView: View {
     var body: some View {
         TabView(selection: $selection){
             EventListView().tabItem{
-                Label("Events", systemImage: "house.fill").accentColor(.primary)
+                Label("Events", systemImage: "list.bullet.rectangle.fill").accentColor(.primary)
             }.tag(0)
             JoinedEventsListView().tabItem{
-                Label("Your Events", systemImage: "person.3.fill").accentColor(.primary)
+                Label("Groups", systemImage: "person.3.fill").accentColor(.primary)
             }.tag(1)
         }.onAppear{}
     }

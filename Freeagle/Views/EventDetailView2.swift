@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 struct EventDetailView2: View {
     @Environment(\.dismiss) private var dismiss
@@ -8,24 +9,20 @@ struct EventDetailView2: View {
     @State var users: [User] = []
     var api = APIService()
 
-    // Vista per ogni partecipante
     struct ParticipantRow: View {
         let participant: User
         
         var body: some View {
             HStack(spacing: 12) {
-                
-                // Informazioni utente
-                HStack() {
+                HStack {
                     Text(participant.username)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
                     
-                    Text(participant.participate == "true" ? " joined the event": "")
+                    Text(participant.participate == "true" ? " joined the event" : "")
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.secondary)
                 }
-                
                 Spacer()
             }
             .padding(.vertical, 8)
@@ -34,10 +31,9 @@ struct EventDetailView2: View {
             .cornerRadius(12)
         }
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            // Header fisso con immagine hero
             ZStack(alignment: .topLeading) {
                 Image(event.category)
                     .resizable()
@@ -48,25 +44,29 @@ struct EventDetailView2: View {
             }
             .ignoresSafeArea(edges: .top)
             
-            // Informazioni evento fisse
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(event.title)
                         .font(.system(size: 30, weight: .bold, design: .default))
                         .foregroundColor(.primary)
                     
-                    HStack(spacing: 6) {
-                        Image(systemName: "location.fill")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 14))
-                        Text(event.geo.address.formatted_address)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.secondary)
+                    Button(action: {
+                        openInMaps()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "location.fill")
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 14))
+                            Text(event.geo.address.formatted_address)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.blue)
+                                .underline()
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 
-                // Info cards
-                HStack(spacing:15) {
+                HStack(spacing: 15) {
                     InfoCard(
                         icon: "calendar",
                         title: "Date",
@@ -76,10 +76,9 @@ struct EventDetailView2: View {
                     
                     Spacer()
                     
-                    // Cuoricino per i preferiti
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.2)) {
-                            isFavorite.toggle()
+                            toggleFavorite()
                         }
                     }) {
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
@@ -100,10 +99,8 @@ struct EventDetailView2: View {
             .padding(.bottom, 16)
             .background(Color(.systemBackground))
             
-            // ScrollView solo per i dettagli
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Sezione dettagli
                     VStack(alignment: .leading, spacing: 16) {
                         Button(action: {
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -120,7 +117,6 @@ struct EventDetailView2: View {
                                 Image(systemName: isDetailsExpanded ? "chevron.up" : "chevron.down")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(.blue)
-                                    .rotationEffect(.degrees(isDetailsExpanded ? 0 : 0))
                             }
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -136,9 +132,8 @@ struct EventDetailView2: View {
                                 ))
                         }
                     }
-                    
-                    // Sezione partecipanti
-                    if users.count > 0{
+
+                    if users.count > 0 {
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("Participants")
@@ -159,10 +154,8 @@ struct EventDetailView2: View {
                             }
                         }
                     }
-                    
                 }
                 .padding(.horizontal, 15)
-                .padding(.top, 0)
                 .padding(.bottom, 50)
             }
             .padding(.bottom, 10)
@@ -171,7 +164,7 @@ struct EventDetailView2: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {dismiss()}) {
+                Button(action: { dismiss() }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .semibold))
@@ -184,33 +177,67 @@ struct EventDetailView2: View {
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
                 }
             }
-        }.onAppear{
-            getUsers()
         }
-        
-        //.toolbar(.hidden, for: .tabBar)
+        .onAppear {
+            getUsers()
+            loadFavoriteStatus()
+        }
     }
+    
+    private func openInMaps() {
+        let latitude = event.location[1]
+        let longitude = event.location[0]
+        
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = event.title
+        
+        mapItem.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
+    }
+
+    // MARK: - Funzioni per i Preferiti
+    
+    private func loadFavoriteStatus() {
+        isFavorite = FavoritesManager.shared.isEventFavorite(eventID: event.id)
+    }
+    
+    private func toggleFavorite() {
+        isFavorite = FavoritesManager.shared.toggleFavorite(eventID: event.id)
+    }
+
+    // MARK: - Funzioni Utili
+    
     private func getUsers() {
-        print("CIAO")
-        Task{
-            do{
-                let x = try await api.searchEvent(inviteCode: event.inviteCode!)
+        Task {
+            guard let inviteCode = event.inviteCode else {
+                print("⚠️ Invite code is nil – cannot load users.")
+                return
+            }
+            
+            do {
+                let x = try await api.searchEvent(inviteCode: inviteCode)
                 print(x.users ?? [])
                 users = x.users ?? []
+            } catch {
+                print("❌ Failed to fetch users: \(error)")
             }
         }
     }
+
     func formatDateString(_ dateString: String) -> String {
         let inputFormatter = DateFormatter()
         inputFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         inputFormatter.locale = Locale(identifier: "en_US")
         
         guard let date = inputFormatter.date(from: dateString) else {
-            return dateString // Return original if parsing fails
+            return dateString
         }
         
         let outputFormatter = DateFormatter()
-        outputFormatter.dateFormat = "MMMM d, yyyy 'at' h:mm a"
+        outputFormatter.dateFormat = "MMMM dd, YYYY 'at' h:mm a"
         outputFormatter.locale = Locale(identifier: "en_US")
         
         return outputFormatter.string(from: date)
@@ -218,5 +245,18 @@ struct EventDetailView2: View {
 }
 
 #Preview {
-    EventDetailView2(event: Event(id: "", title: "", description: "", category: "", entities: [Entity(entity_id: "", name: "", type: "")], start_local: "", end_local: "", location: [1.0, 1.0], geo: Geo(address: Address(country_code: "", formatted_address: ""))))
+    EventDetailView2(event: Event(
+        inviteCode: "INV123",
+        id: "1",
+        title: "Sample Event",
+        description: "This is a sample event description.",
+        category: "sample-category-image",
+        entities: [Entity(entity_id: "1", name: "Sample Org", type: "organization")],
+        start_local: "2025-08-01T19:00:00",
+        end_local: "2025-08-01T21:00:00",
+        location: [45.0, 9.0],
+        geo: Geo(address: Address(country_code: "IT", formatted_address: "Milan, Italy"))
+    ))
 }
+
+

@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import MapKit
 
 struct EventDetailView: View {
     @Environment(\.dismiss) private var dismiss
@@ -32,17 +33,24 @@ struct EventDetailView: View {
                         .font(.system(size: 30, weight: .bold, design: .default))
                         .foregroundColor(.primary)
                     
-                    HStack(spacing: 6) {
-                        Image(systemName: "location.fill")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 14))
-                        Text(event.geo.address.formatted_address)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.secondary)
+                    // Location con link alla mappa
+                    Button(action: {
+                        openInMaps()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "location.fill")
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 14))
+                            Text(event.geo.address.formatted_address)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.blue)
+                                .underline()
+                        }
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 
-                // Info cards
+                // Info cards (senza il pulsante mappa)
                 HStack(spacing:15) {
                     InfoCard(
                         icon: "calendar",
@@ -51,12 +59,10 @@ struct EventDetailView: View {
                         color: .blue
                     )
                     
-                    
-                    OpenInMapsButton(latitude: event.location[1], longitude: event.location[0])
                     // Cuoricino per i preferiti
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.2)) {
-                            isFavorite.toggle()
+                            toggleFavorite()
                         }
                     }) {
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
@@ -122,6 +128,9 @@ struct EventDetailView: View {
             }
             .padding(.bottom, 10)
         }
+        .onAppear {
+            loadFavoriteStatus()
+        }
         .ignoresSafeArea(edges: .top)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -139,7 +148,7 @@ struct EventDetailView: View {
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
                         }
                     }
-            //MARK: 
+            //MARK:
                     //Share Button
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(action: {
@@ -154,6 +163,21 @@ struct EventDetailView: View {
                     }
                 }
         //.toolbar(.hidden, for: .tabBar)
+    }
+    
+    // Funzione per aprire la mappa
+    private func openInMaps() {
+        let latitude = event.location[1]
+        let longitude = event.location[0]
+        
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = event.title
+        
+        mapItem.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
     }
     
     func handleAddEvent() {
@@ -204,7 +228,17 @@ struct EventDetailView: View {
                 print("Added new event with invite code: \(inviteCode)")
                 print("Total events in UserDefaults: \(events.count)")
             }
+        
         }
+    
+    private func loadFavoriteStatus() {
+        isFavorite = FavoritesManager.shared.isEventFavorite(eventID: event.id)
+    }
+    
+    private func toggleFavorite() {
+        isFavorite = FavoritesManager.shared.toggleFavorite(eventID: event.id)
+    }
+    
     func formatDateString(_ dateString: String) -> String {
         let inputFormatter = DateFormatter()
         inputFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
@@ -215,7 +249,7 @@ struct EventDetailView: View {
         }
         
         let outputFormatter = DateFormatter()
-        outputFormatter.dateFormat = "MMMM d, yyyy"
+        outputFormatter.dateFormat = "MMMM dd, YYYY 'at' h:mm a"
         outputFormatter.locale = Locale(identifier: "en_US")
         
         return outputFormatter.string(from: date)

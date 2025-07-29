@@ -64,7 +64,7 @@ struct EventCard: View {
         }
         
         let outputFormatter = DateFormatter()
-        outputFormatter.dateFormat = "MMMM d, yyyy"
+        outputFormatter.dateFormat = "MMMM dd, YYYY"
         outputFormatter.locale = Locale(identifier: "en_US")
         
         return outputFormatter.string(from: date)

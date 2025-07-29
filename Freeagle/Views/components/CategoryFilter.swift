@@ -45,14 +45,14 @@ struct CategoryFilterView: View {
                         }
                     }
                 } header: {
-                    Text("Seleziona le categorie da visualizzare")
+                    Text("Select the categories to view")
                 }
             }
             .navigationTitle("Categories")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Delete") {
+                    Button("Cancel") {
                         dismiss()
                     }
                 }
