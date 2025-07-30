@@ -222,7 +222,9 @@ struct EventDetailView2: View {
     private func handleAddEvent(){
         let inviteCode = "\(event.id)-\(username)"
         UIPasteboard.general.setValue(inviteCode, forPasteboardType: UTType.plainText.identifier)
-
+        
+        // Show toast after copying to clipboard
+        showToast = true
     }
 
     // MARK: - Funzioni per i Preferiti
@@ -285,5 +287,3 @@ struct EventDetailView2: View {
         geo: Geo(address: Address(country_code: "IT", formatted_address: "Milan, Italy"))
     ))
 }
-
-

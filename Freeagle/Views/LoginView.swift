@@ -100,7 +100,7 @@ struct LoginView: View {
                                         .progressViewStyle(CircularProgressViewStyle(tint: .blue))
                                         .frame(width: 20, height: 20)
                                 } else {
-                                    Text("Login")
+                                    Text("Continue")
                                         .font(.title2)
                                         .fontWeight(.semibold)
                                 }

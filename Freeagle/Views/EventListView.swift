@@ -8,36 +8,25 @@ struct EventListView: View {
     @State private var selectedFilter = FilterType.all
     @State private var categoriesFilterActive = false
     @State private var showingCategoryFilter = false
-    @State private var showingCalendarPicker = false
     @State private var selectedCategories: Set<EventCategory> = []
     @State private var favoriteEventIDs: Set<String> = []
-    @State private var selectedDate = Date()
-    @State private var calendarFilterActive = false
     @State private var selectedTime = Date()
     @State private var showingEventDetail = false
     @State private var selectedEvent: Event?
     @State private var showEventDetail = false
-    
-    // Aggiungi per la geolocalizzazione
-    @StateObject private var locationManager = LocationManager()
-    @State private var userLocation: CLLocation?
 
     private let api = APIService()
 
     enum FilterType: String, CaseIterable {
         case all = "All"
         case category = "Categories"
-        case nearby = "Nearby"
         case favorites = "Favorites"
-        case calendar = "Calendar"
 
         var icon: String {
             switch self {
             case .all: return "square.grid.2x2"
             case .category: return "tag.fill"
-            case .nearby: return "location.fill"
             case .favorites: return "heart.fill"
-            case .calendar: return "calendar"
             }
         }
     }
@@ -79,27 +68,9 @@ struct EventListView: View {
     private var filteredEvents: [Event] {
         var eventsToFilter = events
         
-        // Filtra per calendario se attivo
-        if calendarFilterActive {
-            eventsToFilter = eventsToFilter.filter { event in
-                return isSameDay(eventDateString: event.start_local, selectedDate: selectedDate)
-            }
-        }
-        
         // Filtra per eventi preferiti
         if selectedFilter == .favorites {
             eventsToFilter = eventsToFilter.filter { favoriteEventIDs.contains($0.id) }
-        }
-
-        // Ordina per distanza se filtro nearby è attivo
-        if selectedFilter == .nearby {
-            if let userLocation = userLocation {
-                eventsToFilter = eventsToFilter.sorted { event1, event2 in
-                    let distance1 = calculateDistance(from: userLocation, to: event1)
-                    let distance2 = calculateDistance(from: userLocation, to: event2)
-                    return distance1 < distance2
-                }
-            }
         }
         
         // Filtra per categorie
@@ -162,16 +133,11 @@ struct EventListView: View {
             mainBody
                 .onAppear {
                     fetchEvents()
-                    locationManager.requestLocation()
                     loadFavorites() // Carica i preferiti all'avvio
                 }
                 .refreshable {
                     fetchEvents()
-                    locationManager.requestLocation()
                     loadFavorites() // Ricarica anche i preferiti quando si fa refresh
-                }
-                .onReceive(locationManager.$location) { location in
-                    userLocation = location
                 }
                 // Ascolta per cambiamenti nei preferiti
                 .onReceive(NotificationCenter.default.publisher(for: .favoritesChanged)) { _ in
@@ -192,26 +158,6 @@ struct EventListView: View {
                         .animation(.easeInOut(duration: 0.3), value: selectedFilter)
 
                     Spacer()
-                    
-                    // MARK: - RIMUOVERE QUESTO CODICE PER TOGLIERE L'ICONA NEL NEARBY
-                    // Mostra indicatore di posizione se filtro nearby è attivo
-                    if selectedFilter == .nearby {
-                        HStack(spacing: 4) {
-                            Image(systemName: locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways ? "location.fill" : "location.slash")
-                                .foregroundColor(locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways ? .white : .white)
-                                .font(.caption)
-                            
-                            if locationManager.authorizationStatus == .denied {
-                                Button("Enable Location") {
-                                    if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-                                        UIApplication.shared.open(settingsUrl)
-                                    }
-                                }
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                            }
-                        }
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
@@ -253,28 +199,6 @@ struct EventListView: View {
                         .padding(.horizontal, 20)
                     }.padding(.bottom, 10)
                 }
-                
-                // Mostra la data selezionata se il filtro calendario è attivo
-                if calendarFilterActive {
-                    HStack {
-                        HStack(spacing: 4) {
-                            Image(systemName: "calendar")
-                                .font(.caption)
-                            Text(formatSelectedDate())
-                                .font(.caption)
-                                .fontWeight(.medium)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.2))
-                        .foregroundColor(.blue)
-                        .clipShape(Capsule())
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
-                }
             }
             .background(Color(.systemBackground))
             .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
@@ -306,9 +230,7 @@ struct EventListView: View {
                     // Mostra messaggio se non ci sono eventi dopo il filtro
                     if filteredEvents.isEmpty && (
                         (categoriesFilterActive && !selectedCategories.isEmpty) ||
-                        selectedFilter == .favorites ||
-                        calendarFilterActive ||
-                        selectedFilter == .nearby
+                        selectedFilter == .favorites
                     ) {
                         VStack(spacing: 16) {
                             Image(systemName: getEmptyStateIcon())
@@ -335,17 +257,13 @@ struct EventListView: View {
                     } else {
                         LazyVStack(spacing: 16) {
                             if filteredEvents.count > 0{
-                                ForEach(selectedFilter == .nearby ? filteredEvents : filteredEvents.reversed(), id: \.id) { event in
+                                ForEach(filteredEvents.reversed(), id: \.id) { event in
                                     if compareEventDateWithToday(event.start_local) == .orderedDescending || compareEventDateWithToday(event.start_local) == .orderedSame {
                                         Button(action: {
                                             selectedEvent = event
                                             // showingEventDetail = true
                                         }) {
-                                            EventCardWithDistance(
-                                                event: event,
-                                                userLocation: userLocation,
-                                                showDistance: selectedFilter == .nearby
-                                            )
+                                            EventCard(event: event)
                                         }
                                         .buttonStyle(PlainButtonStyle())
                                     }
@@ -367,24 +285,6 @@ struct EventListView: View {
             CategoryFilterView(selectedCategories: $selectedCategories) { hasSelection in
                 categoriesFilterActive = hasSelection
             }
-        }
-        .sheet(isPresented: $showingCalendarPicker) {
-            CalendarPickerView(selectedDate: $selectedDate) {
-                selectedFilter = .calendar
-                calendarFilterActive = true
-            }
-        }
-        .alert("Location Access Required", isPresented: .constant(selectedFilter == .nearby && locationManager.authorizationStatus == .denied)) {
-            Button("Settings") {
-                if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(settingsUrl)
-                }
-            }
-            Button("Cancel") {
-                selectedFilter = .all
-            }
-        } message: {
-            Text("Please enable location access in Settings to use the nearby events filter")
         }
     }
 
@@ -412,38 +312,13 @@ struct EventListView: View {
         // Usa FavoritesManager per ottenere tutti gli ID degli eventi preferiti
         favoriteEventIDs = Set(FavoritesManager.shared.getAllFavoriteEventIDs())
     }
-    
-    // Funzione per calcolare la distanza tra utente e evento
-    private func calculateDistance(from userLocation: CLLocation, to event: Event) -> CLLocationDistance {
-        // Usa l'array location che contiene [longitude, latitude]
-        guard event.location.count >= 2 else {
-            return CLLocationDistanceMax // Distanza massima se coordinate non disponibili
-        }
-        
-        let eventLongitude = event.location[0]
-        let eventLatitude = event.location[1]
-        let eventLocation = CLLocation(latitude: eventLatitude, longitude: eventLongitude)
-        return userLocation.distance(from: eventLocation)
-    }
-    
-    // Funzione per formattare la distanza in modo leggibile
-    private func formatDistance(_ distance: CLLocationDistance) -> String {
-        let formatter = MeasurementFormatter()
-        formatter.unitOptions = .naturalScale
-        formatter.numberFormatter.maximumFractionDigits = 1
-        
-        let measurement = Measurement(value: distance, unit: UnitLength.meters)
-        return formatter.string(from: measurement)
-    }
 
     private func getFilterSelectionState(_ filter: FilterType) -> Bool {
         switch filter {
         case .category:
             return categoriesFilterActive && !selectedCategories.isEmpty
-        case .calendar:
-            return calendarFilterActive
         default:
-            return selectedFilter == filter && !categoriesFilterActive && !calendarFilterActive
+            return selectedFilter == filter && !categoriesFilterActive
         }
     }
 
@@ -451,62 +326,22 @@ struct EventListView: View {
         switch filter {
         case .category:
             showingCategoryFilter = true
-        case .calendar:
-            showingCalendarPicker = true
-        case .nearby:
-            if locationManager.authorizationStatus == .notDetermined {
-                locationManager.requestPermission()
-            }
-            selectedFilter = filter
-            categoriesFilterActive = false
-            calendarFilterActive = false
-            selectedCategories.removeAll()
-            selectedDate = Date()
         case .favorites:
             // Ricarica i preferiti quando viene selezionato il filtro
             loadFavorites()
             selectedFilter = filter
             categoriesFilterActive = false
-            calendarFilterActive = false
             selectedCategories.removeAll()
-            selectedDate = Date()
         default:
             selectedFilter = filter
             categoriesFilterActive = false
-            calendarFilterActive = false
             selectedCategories.removeAll()
-            selectedDate = Date()
         }
-    }
-    
-    private func isSameDay(eventDateString: String, selectedDate: Date) -> Bool {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM dd, YYYY"
-        formatter.locale = Locale(identifier: "us_US")
-        
-        guard let eventDate = formatter.date(from: eventDateString) else {
-            return false
-        }
-        
-        let calendar = Calendar.current
-        return calendar.isDate(eventDate, inSameDayAs: selectedDate)
-    }
-    
-    private func formatSelectedDate() -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.dateFormat = "MMMM dd, YYYY"
-        formatter.locale = Locale(identifier: "us_US")
-        return formatter.string(from: selectedDate)
     }
 
     private func getEmptyStateIcon() -> String {
         if selectedFilter == .favorites {
             return "heart.slash"
-        } else if calendarFilterActive {
-            return "calendar.badge.exclamationmark"
-        } else if selectedFilter == .nearby {
-            return "location.slash"
         } else {
             return "magnifyingglass"
         }
@@ -515,10 +350,6 @@ struct EventListView: View {
     private func getEmptyStateTitle() -> String {
         if selectedFilter == .favorites {
             return "No favorite events"
-        } else if calendarFilterActive {
-            return "No events on the selected date"
-        } else if selectedFilter == .nearby {
-            return "No nearby events found"
         } else {
             return "No events found"
         }
@@ -527,10 +358,6 @@ struct EventListView: View {
     private func getEmptyStateMessage() -> String {
         if selectedFilter == .favorites {
             return "You haven't added any events to your favorites yet. Tap the heart icon on events you like to see them here."
-        } else if calendarFilterActive {
-            return "There are no events scheduled for \(formatSelectedDate())"
-        } else if selectedFilter == .nearby {
-            return "No events found in your area. Try enabling location access or check other filters."
         } else {
             return "There are no events for the selected categories"
         }
@@ -539,9 +366,7 @@ struct EventListView: View {
     private func resetAllFilters() {
         selectedCategories.removeAll()
         categoriesFilterActive = false
-        calendarFilterActive = false
         selectedFilter = .all
-        selectedDate = Date()
     }
     
     func compareEventDateWithToday(_ eventDateString: String, today: Date = Date()) -> ComparisonResult {
@@ -553,89 +378,6 @@ struct EventListView: View {
         }
         
         return eventDate.compare(today)
-    }
-}
-
-// MARK: - LocationManager
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
-    
-    @Published var location: CLLocation?
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        authorizationStatus = locationManager.authorizationStatus
-    }
-    
-    func requestPermission() {
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    func requestLocation() {
-        guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
-            return
-        }
-        locationManager.requestLocation()
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        location = locations.last
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        authorizationStatus = status
-        if status == .authorizedWhenInUse || status == .authorizedAlways {
-            requestLocation()
-        }
-    }
-}
-
-// MARK: - EventCardWithDistance
-struct EventCardWithDistance: View {
-    let event: Event
-    let userLocation: CLLocation?
-    let showDistance: Bool
-    
-    var body: some View {
-        VStack {
-            // Il tuo EventCard esistente
-            EventCard(event: event)
-            
-            // Aggiungi distanza se richiesta
-            if showDistance, let userLocation = userLocation,
-               event.location.count >= 2 {
-                let eventLatitude = event.location[1]
-                let eventLongitude = event.location[0]
-                let eventLocation = CLLocation(latitude: eventLatitude, longitude: eventLongitude)
-                let distance = userLocation.distance(from: eventLocation)
-                
-                HStack {
-                    Text(formatDistance(distance))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-            }
-        }
-    }
-    
-    private func formatDistance(_ distance: CLLocationDistance) -> String {
-        let formatter = MeasurementFormatter()
-        formatter.unitOptions = .naturalScale
-        formatter.numberFormatter.maximumFractionDigits = 1
-        
-        let measurement = Measurement(value: distance, unit: UnitLength.meters)
-        return formatter.string(from: measurement)
     }
 }
 
