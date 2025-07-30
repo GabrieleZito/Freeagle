@@ -112,15 +112,20 @@ struct EventDetailView3: View {
                 
                 // ScrollView solo per i dettagli
                 ScrollView {
+                    
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Details")
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.primary)
+                        if event.description.dropFirst(29).count > 2 {
+                            Text(event.description)
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundColor(.black)
+                                .lineSpacing(4)
+                        } else {
+                            Text("No description available")
+                        }
                         
-                        Text(event.description)
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(.black)
-                            .lineSpacing(4)
                     }
                     .padding(.horizontal, 20) // Consistent padding
                     .padding(.bottom, 20)

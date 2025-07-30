@@ -86,7 +86,6 @@ struct EventDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     // Sezione dettagli
-                    if event.description.dropFirst(29).count > 2{
                         VStack(alignment: .leading, spacing: 16) {
                             Button(action: {
                                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -109,19 +108,25 @@ struct EventDetailView: View {
                             .buttonStyle(PlainButtonStyle())
                             
                             if isDetailsExpanded {
-                                Text(event.description.dropFirst(29))
-                                    .font(.system(size: 16, weight: .regular))
-                                    .foregroundColor(.black)
-                                    .lineSpacing(4)
-                                    .transition(.asymmetric(
-                                        insertion: .opacity.combined(with: .move(edge: .top)),
-                                        removal: .opacity.combined(with: .move(edge: .top))
-                                    ))
+                                if event.description.dropFirst(29).count > 2 {
+                                    Text(event.description.dropFirst(29))
+                                        .font(.system(size: 16, weight: .regular))
+                                        .foregroundColor(.black)
+                                        .lineSpacing(4)
+                                        .transition(.asymmetric(
+                                            insertion: .opacity.combined(with: .move(edge: .top)),
+                                            removal: .opacity.combined(with: .move(edge: .top))
+                                        ))
+                                }else{
+                                    Text("No description available")
+                                }
+
+                                
                             }
                                 
                         }.padding(.horizontal, 16)
                             .padding(.bottom, 40)
-                    }
+                    
                     
                 }
                 .padding(.top, 0)

@@ -402,27 +402,30 @@ struct EventListView: View {
     }
 
     private func handleFilterSelection(_ filter: FilterType) {
-        switch filter {
-        case .category:
-            showingCategoryFilter = true
-        case .calendar:
-            showingCalendarPicker = true
-        case .favorites:
-            // Ricarica i preferiti quando viene selezionato il filtro
-            loadFavorites()
-            selectedFilter = filter
-            categoriesFilterActive = false
-            calendarFilterActive = false
-            selectedCategories.removeAll()
-            selectedDate = Date()
-        default:
-            selectedFilter = filter
-            categoriesFilterActive = false
-            calendarFilterActive = false
-            selectedCategories.removeAll()
-            selectedDate = Date()
+            switch filter {
+            case .category:
+                // Se stavamo visualizzando i preferiti, reset tutto
+                if selectedFilter == .favorites {
+                    resetAllFilters()
+                }
+                showingCategoryFilter = true
+            case .calendar:
+                // Se stavamo visualizzando i preferiti, reset tutto
+                if selectedFilter == .favorites {
+                    resetAllFilters()
+                }
+                showingCalendarPicker = true
+            case .favorites:
+                // Quando si seleziona favorites, reset tutto e imposta solo favorites
+                resetAllFilters()
+                loadFavorites()
+                selectedFilter = filter
+            case .all:
+                // Reset tutti i filtri quando si seleziona "All"
+                resetAllFilters()
+                selectedFilter = filter
+            }
         }
-    }
     
     private func isSameDay(eventDateString: String, selectedDate: Date) -> Bool {
         let formatter = DateFormatter()
