@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 struct EventDetailView3: View {
     @Environment(\.dismiss) private var dismiss
@@ -83,14 +84,20 @@ struct EventDetailView3: View {
                             .font(.system(size: 30, weight: .bold, design: .default))
                             .foregroundColor(.primary)
                         
-                        HStack(spacing: 6) {
-                            Image(systemName: "location.fill")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 14))
-                            Text(event.geo.address.formatted_address)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.secondary)
+                        Button(action: {
+                            openInMaps()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "location.fill")
+                                    .foregroundColor(.secondary)
+                                    .font(.system(size: 14))
+                                Text(event.geo.address.formatted_address)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.blue)
+                                    .underline()
+                            }
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     
                     // Info cards
@@ -330,6 +337,20 @@ struct EventDetailView3: View {
                 print(error)
             }
         }
+    }
+    
+    private func openInMaps() {
+        let latitude = event.location[1]
+        let longitude = event.location[0]
+        
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = event.title
+        
+        mapItem.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
     }
     
     func handleAddEvent() {

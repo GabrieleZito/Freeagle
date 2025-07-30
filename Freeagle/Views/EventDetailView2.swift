@@ -128,14 +128,19 @@ struct EventDetailView2: View {
                         .buttonStyle(PlainButtonStyle())
                         
                         if isDetailsExpanded {
-                            Text(event.description)
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundColor(.black)
-                                .lineSpacing(4)
-                                .transition(.asymmetric(
-                                    insertion: .opacity.combined(with: .move(edge: .top)),
-                                    removal: .opacity.combined(with: .move(edge: .top))
-                                ))
+                            if event.description.dropFirst(29).count > 2 {
+                                Text(event.description)
+                                    .font(.system(size: 16, weight: .regular))
+                                    .foregroundColor(.black)
+                                    .lineSpacing(4)
+                                    .transition(.asymmetric(
+                                        insertion: .opacity.combined(with: .move(edge: .top)),
+                                        removal: .opacity.combined(with: .move(edge: .top))
+                                    ))
+                            }else {
+                                Text("No description Available")
+                            }
+                            
                         }
                     }
 
