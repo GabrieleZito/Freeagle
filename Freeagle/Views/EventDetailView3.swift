@@ -72,8 +72,8 @@ struct EventDetailView3: View {
                         }
                         Spacer()
                     }
-                    .padding(.top, 20) // Reduced from 50 for sheet presentation
-                    .padding(.horizontal, 20) // Reduced from 40
+                    .padding(.top, 20)
+                    .padding(.horizontal, 20)
                 }
                 .frame(width: geometry.size.width)
                 
@@ -113,7 +113,7 @@ struct EventDetailView3: View {
                     Divider()
                         .padding(.vertical, 2)
                 }
-                .padding(.horizontal, 20) // Consistent padding
+                .padding(.horizontal, 20)
                 .padding(.top, 24)
                 .padding(.bottom, 16)
                 .background(Color(.systemBackground))
@@ -135,7 +135,7 @@ struct EventDetailView3: View {
                         }
                         
                     }
-                    .padding(.horizontal, 20) // Consistent padding
+                    .padding(.horizontal, 20)
                     .padding(.bottom, 20)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -246,7 +246,7 @@ struct EventDetailView3: View {
         
     }
     
-    // Nuova funzione per controllare se l'utente sta già partecipando
+    // funzione per controllare se l'utente sta già partecipando
     func isUserAlreadyParticipating() -> Bool {
         var events: [Event] = []
         if let data = UserDefaults.standard.data(forKey: "userEvents") {
@@ -275,7 +275,7 @@ struct EventDetailView3: View {
         inputFormatter.locale = Locale(identifier: "en_US")
         
         guard let date = inputFormatter.date(from: dateString) else {
-            return dateString // Return original if parsing fails
+            return dateString
         }
         
         let outputFormatter = DateFormatter()
@@ -307,7 +307,6 @@ struct EventDetailView3: View {
                         if existingEvent == nil{
                             events.append(event)
                             
-                            // Save back to UserDefaults (encode to Data)
                             do {
                                 let data = try JSONEncoder().encode(events)
                                 UserDefaults.standard.set(data, forKey: "userEvents")
@@ -378,7 +377,7 @@ struct EventDetailView3: View {
             event.inviteCode = inviteCode
             events.append(event)
             
-            // Save back to UserDefaults (encode to Data)
+            // Save to UserDefaults
             do {
                 let data = try JSONEncoder().encode(events)
                 UserDefaults.standard.set(data, forKey: "userEvents")

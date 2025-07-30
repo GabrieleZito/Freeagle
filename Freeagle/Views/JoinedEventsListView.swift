@@ -111,7 +111,6 @@ struct JoinedEventsListView: View {
             let events = try JSONDecoder().decode([Event].self, from: data)
             
             if events.isEmpty {
-                // Array exists but is empty
                 joinedEvents = []
                 //errorMessage = "No joined events found"
             } else {

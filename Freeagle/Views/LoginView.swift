@@ -23,7 +23,6 @@ struct LoginView: View {
     var loginScreen: some View {
         GeometryReader { geometry in
             ZStack {
-                // Gradient background
                 LinearGradient(
                     gradient: Gradient(colors: [
                         Color.cyan.opacity(0.8),

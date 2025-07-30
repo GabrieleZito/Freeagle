@@ -189,17 +189,6 @@ struct EventDetailView2: View {
                 }
                 
             }
-//            ToolbarItem(placement: .navigationBarTrailing) {
-//                Button(action: {
-//                    handleAddEvent()
-//                }) {
-//                    Image(systemName: "square.and.arrow.up")
-//                        .font(.system(size: 18, weight: .semibold))
-//                        .foregroundColor(.white)
-//                        .frame(width: 50, height: 50)
-//                        .background(.ultraThinMaterial, in: Circle())
-//                }
-//            }
         }
         .onAppear {
             getUsers()

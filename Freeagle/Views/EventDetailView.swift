@@ -215,7 +215,7 @@ struct EventDetailView: View {
             event.inviteCode = inviteCode
             events.append(event)
             
-            // Save back to UserDefaults (encode to Data)
+            // Save to UserDefaults
             do {
                 let data = try JSONEncoder().encode(events)
                 UserDefaults.standard.set(data, forKey: "userEvents")
@@ -251,7 +251,7 @@ struct EventDetailView: View {
         inputFormatter.locale = Locale(identifier: "en_US")
         
         guard let date = inputFormatter.date(from: dateString) else {
-            return dateString // Return original if parsing fails
+            return dateString
         }
         
         let outputFormatter = DateFormatter()
