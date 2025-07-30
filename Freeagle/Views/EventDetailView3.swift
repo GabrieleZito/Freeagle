@@ -6,6 +6,7 @@ struct EventDetailView3: View {
     @State var event: Event
     var api = APIService()
     @State private var username = UserDefaults.standard.object(forKey: "username")!
+    @State private var showAlreadyParticipatingAlert = false
 
     enum InviteStatus {
         case pending, accepted, declined
@@ -154,7 +155,6 @@ struct EventDetailView3: View {
                     HStack(spacing: 12) {
                         // Pulsante Rifiuta
                         Button(action: {
-                            //print(event)
                             handleSubmit(inviteCode: event.inviteCode!, username: username as! String, accepted: "false")
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                                 inviteStatus = .declined
@@ -183,7 +183,12 @@ struct EventDetailView3: View {
                         
                         // Pulsante Accetta
                         Button(action: {
-                            //print(event)
+                            // Controlla se l'utente sta già partecipando all'evento
+                            if isUserAlreadyParticipating() {
+                                showAlreadyParticipatingAlert = true
+                                return
+                            }
+                            
                             handleSubmit(inviteCode: event.inviteCode!, username: username as! String, accepted: "true")
 
                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -222,7 +227,39 @@ struct EventDetailView3: View {
         }
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)
+        .alert("Already Participating", isPresented: $showAlreadyParticipatingAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("You are already participating in this event.")
+        }
+        .onAppear {
+            // Controlla lo stato iniziale quando la view appare
+            checkInitialParticipationStatus()
+        }
         
+    }
+    
+    // Nuova funzione per controllare se l'utente sta già partecipando
+    func isUserAlreadyParticipating() -> Bool {
+        var events: [Event] = []
+        if let data = UserDefaults.standard.data(forKey: "userEvents") {
+            do {
+                events = try JSONDecoder().decode([Event].self, from: data)
+            } catch {
+                print("Error decoding events: \(error)")
+                return false
+            }
+        }
+        
+        // Controlla se esiste già un evento con lo stesso inviteCode
+        return events.contains { $0.inviteCode == event.inviteCode }
+    }
+    
+    // Nuova funzione per controllare lo stato iniziale
+    func checkInitialParticipationStatus() {
+        if isUserAlreadyParticipating() {
+            inviteStatus = .accepted
+        }
     }
     
     func formatDateString(_ dateString: String) -> String {
@@ -256,20 +293,35 @@ struct EventDetailView3: View {
                             events = []
                         }
                     }
-                    let existingEvent = events.first { $0.inviteCode == inviteCode }
-                    if existingEvent == nil{
-                        events.append(event)
-                        
-                        // Save back to UserDefaults (encode to Data)
+                    
+                    // Solo per accettazione, aggiungi l'evento se non esiste già
+                    if accepted == "true" {
+                        let existingEvent = events.first { $0.inviteCode == inviteCode }
+                        if existingEvent == nil{
+                            events.append(event)
+                            
+                            // Save back to UserDefaults (encode to Data)
+                            do {
+                                let data = try JSONEncoder().encode(events)
+                                UserDefaults.standard.set(data, forKey: "userEvents")
+                                print("Successfully saved events to UserDefaults")
+                                
+                            } catch {
+                                print("Error encoding events: \(error)")
+                            }
+                        }
+                    } else {
+                        // Per il rifiuto, rimuovi l'evento se esiste
+                        events.removeAll { $0.inviteCode == inviteCode }
                         do {
                             let data = try JSONEncoder().encode(events)
                             UserDefaults.standard.set(data, forKey: "userEvents")
-                            print("Successfully saved events to UserDefaults")
-                            
+                            print("Successfully removed event from UserDefaults")
                         } catch {
                             print("Error encoding events: \(error)")
                         }
                     }
+                    
                     dismiss()
                 }else{
                     print("error")

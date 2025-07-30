@@ -18,9 +18,6 @@ class FavoritesManager: ObservableObject {
         
         saveFavoriteEventIDs(favorites)
         
-        // Invia notifica del cambiamento
-        NotificationCenter.default.post(name: .favoritesChanged, object: nil)
-        
         return favorites.contains(eventID)
     }
     
@@ -51,7 +48,6 @@ class FavoritesManager: ObservableObject {
     // Metodo per rimuovere tutti i preferiti (opzionale)
     func clearAllFavorites() {
         UserDefaults.standard.removeObject(forKey: favoritesKey)
-        NotificationCenter.default.post(name: .favoritesChanged, object: nil)
     }
     
     // Metodo per ottenere il numero di eventi preferiti (opzionale)

@@ -1,5 +1,4 @@
 import SwiftUI
-import CoreLocation
 
 struct EventListView: View {
     @State private var events: [Event] = []
@@ -18,18 +17,14 @@ struct EventListView: View {
     @State private var selectedEvent: Event?
     @State private var showEventDetail = false
     
-    // Aggiungi per la geolocalizzazione
-    @StateObject private var locationManager = LocationManager()
-    @State private var userLocation: CLLocation?
-
     private let api = APIService()
-
+    
     enum FilterType: String, CaseIterable {
         case all = "All"
         case category = "Categories"
         case favorites = "Favorites"
         case calendar = "Calendar"
-
+        
         var icon: String {
             switch self {
             case .all: return "square.grid.2x2"
@@ -39,7 +34,7 @@ struct EventListView: View {
             }
         }
     }
-
+    
     enum EventCategory: String, CaseIterable {
         case concert = "Concerts"
         case festival = "Festivals"
@@ -48,7 +43,7 @@ struct EventListView: View {
         case expo = "Expos"
         case conference = "Conferences"
         case permformingArt = "Performing Arts"
-
+        
         var icon: String {
             switch self {
             case .concert: return "music.note"
@@ -60,7 +55,7 @@ struct EventListView: View {
             case .permformingArt: return "theatermask.and.paintbrush.fill"
             }
         }
-
+        
         var color: Color {
             switch self {
             case .concert: return .purple
@@ -73,7 +68,7 @@ struct EventListView: View {
             }
         }
     }
-
+    
     private var filteredEvents: [Event] {
         var eventsToFilter = events
         
@@ -143,30 +138,21 @@ struct EventListView: View {
         
         return eventsToFilter
     }
-
+    
     var body: some View {
         NavigationView {
             mainBody
                 .onAppear {
                     fetchEvents()
-                    locationManager.requestLocation()
                     loadFavorites() // Carica i preferiti all'avvio
                 }
                 .refreshable {
                     fetchEvents()
-                    locationManager.requestLocation()
                     loadFavorites() // Ricarica anche i preferiti quando si fa refresh
-                }
-                .onReceive(locationManager.$location) { location in
-                    userLocation = location
-                }
-                // Ascolta per cambiamenti nei preferiti
-                .onReceive(NotificationCenter.default.publisher(for: .favoritesChanged)) { _ in
-                    loadFavorites()
                 }
         }
     }
-
+    
     private var mainBody: some View {
         VStack(spacing: 0) {
             // Header: Titolo + Filtri
@@ -177,12 +163,12 @@ struct EventListView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                         .animation(.easeInOut(duration: 0.3), value: selectedFilter)
-
+                    
                     Spacer()
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
-
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(FilterType.allCases, id: \.self) { filter in
@@ -245,7 +231,7 @@ struct EventListView: View {
             }
             .background(Color(.systemBackground))
             .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
-
+            
             // Contenuto: eventi, skeleton o errore
             ScrollView {
                 if isLoading {
@@ -262,7 +248,7 @@ struct EventListView: View {
                             .foregroundColor(.red)
                             .multilineTextAlignment(.center)
                             .padding()
-
+                        
                         Button("Riprova") {
                             fetchEvents()
                         }
@@ -300,25 +286,18 @@ struct EventListView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         LazyVStack(spacing: 16) {
-                            if filteredEvents.count > 0{
-                                ForEach(filteredEvents.reversed(), id: \.id) { event in
-                                    if compareEventDateWithToday(event.start_local) == .orderedDescending || compareEventDateWithToday(event.start_local) == .orderedSame {
-                                        Button(action: {
-                                            selectedEvent = event
-                                            // showingEventDetail = true
-                                        }) {
-                                            EventCardWithDistance(
-                                                event: event,
-                                                userLocation: userLocation,
-                                                showDistance: false
-                                            )
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
+                            ForEach(filteredEvents.reversed(), id: \.id) { event in
+                                if compareEventDateWithToday(event.start_local) == .orderedDescending || compareEventDateWithToday(event.start_local) == .orderedSame {
+                                    Button(action: {
+                                        selectedEvent = event
+                                        // showingEventDetail = true
+                                    }) {
+                                        EventCard(event: event)
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
-                            }else{
-                                Text("There are no events for this category")
                             }
+                            
                             
                         }
                         .padding(.horizontal, 16)
@@ -341,11 +320,11 @@ struct EventListView: View {
             }
         }
     }
-
+    
     private func fetchEvents() {
         isLoading = true
         errorMessage = nil
-
+        
         Task {
             do {
                 let x = try await api.fetchEvents2()
@@ -367,29 +346,6 @@ struct EventListView: View {
         favoriteEventIDs = Set(FavoritesManager.shared.getAllFavoriteEventIDs())
     }
     
-    // Funzione per calcolare la distanza tra utente e evento
-    private func calculateDistance(from userLocation: CLLocation, to event: Event) -> CLLocationDistance {
-        // Usa l'array location che contiene [longitude, latitude]
-        guard event.location.count >= 2 else {
-            return CLLocationDistanceMax // Distanza massima se coordinate non disponibili
-        }
-        
-        let eventLongitude = event.location[0]
-        let eventLatitude = event.location[1]
-        let eventLocation = CLLocation(latitude: eventLatitude, longitude: eventLongitude)
-        return userLocation.distance(from: eventLocation)
-    }
-    
-    // Funzione per formattare la distanza in modo leggibile
-    private func formatDistance(_ distance: CLLocationDistance) -> String {
-        let formatter = MeasurementFormatter()
-        formatter.unitOptions = .naturalScale
-        formatter.numberFormatter.maximumFractionDigits = 1
-        
-        let measurement = Measurement(value: distance, unit: UnitLength.meters)
-        return formatter.string(from: measurement)
-    }
-
     private func getFilterSelectionState(_ filter: FilterType) -> Bool {
         switch filter {
         case .category:
@@ -400,32 +356,32 @@ struct EventListView: View {
             return selectedFilter == filter && !categoriesFilterActive && !calendarFilterActive
         }
     }
-
+    
     private func handleFilterSelection(_ filter: FilterType) {
-            switch filter {
-            case .category:
-                // Se stavamo visualizzando i preferiti, reset tutto
-                if selectedFilter == .favorites {
-                    resetAllFilters()
-                }
-                showingCategoryFilter = true
-            case .calendar:
-                // Se stavamo visualizzando i preferiti, reset tutto
-                if selectedFilter == .favorites {
-                    resetAllFilters()
-                }
-                showingCalendarPicker = true
-            case .favorites:
-                // Quando si seleziona favorites, reset tutto e imposta solo favorites
+        switch filter {
+        case .category:
+            // Se stavamo visualizzando i preferiti, reset tutto
+            if selectedFilter == .favorites {
                 resetAllFilters()
-                loadFavorites()
-                selectedFilter = filter
-            case .all:
-                // Reset tutti i filtri quando si seleziona "All"
-                resetAllFilters()
-                selectedFilter = filter
             }
+            showingCategoryFilter = true
+        case .calendar:
+            // Se stavamo visualizzando i preferiti, reset tutto
+            if selectedFilter == .favorites {
+                resetAllFilters()
+            }
+            showingCalendarPicker = true
+        case .favorites:
+            // Quando si seleziona favorites, reset tutto e imposta solo favorites
+            resetAllFilters()
+            loadFavorites()
+            selectedFilter = filter
+        case .all:
+            // Reset tutti i filtri quando si seleziona "All"
+            resetAllFilters()
+            selectedFilter = filter
         }
+    }
     
     private func isSameDay(eventDateString: String, selectedDate: Date) -> Bool {
         let formatter = DateFormatter()
@@ -447,7 +403,7 @@ struct EventListView: View {
         formatter.locale = Locale(identifier: "us_US")
         return formatter.string(from: selectedDate)
     }
-
+    
     private func getEmptyStateIcon() -> String {
         if selectedFilter == .favorites {
             return "heart.slash"
@@ -496,94 +452,6 @@ struct EventListView: View {
         
         return eventDate.compare(today)
     }
-}
-
-// MARK: - LocationManager
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
-    
-    @Published var location: CLLocation?
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        authorizationStatus = locationManager.authorizationStatus
-    }
-    
-    func requestPermission() {
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    func requestLocation() {
-        guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
-            return
-        }
-        locationManager.requestLocation()
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        location = locations.last
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        authorizationStatus = status
-        if status == .authorizedWhenInUse || status == .authorizedAlways {
-            requestLocation()
-        }
-    }
-}
-
-// MARK: - EventCardWithDistance
-struct EventCardWithDistance: View {
-    let event: Event
-    let userLocation: CLLocation?
-    let showDistance: Bool
-    
-    var body: some View {
-        VStack {
-            // Il tuo EventCard esistente
-            EventCard(event: event)
-            
-            // Aggiungi distanza se richiesta
-            if showDistance, let userLocation = userLocation,
-               event.location.count >= 2 {
-                let eventLatitude = event.location[1]
-                let eventLongitude = event.location[0]
-                let eventLocation = CLLocation(latitude: eventLatitude, longitude: eventLongitude)
-                let distance = userLocation.distance(from: eventLocation)
-                
-                HStack {
-                    Text(formatDistance(distance))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-            }
-        }
-    }
-    
-    private func formatDistance(_ distance: CLLocationDistance) -> String {
-        let formatter = MeasurementFormatter()
-        formatter.unitOptions = .naturalScale
-        formatter.numberFormatter.maximumFractionDigits = 1
-        
-        let measurement = Measurement(value: distance, unit: UnitLength.meters)
-        return formatter.string(from: measurement)
-    }
-}
-
-// MARK: - Extension per NotificationCenter
-extension Notification.Name {
-    static let favoritesChanged = Notification.Name("favoritesChanged")
 }
 
 #Preview {

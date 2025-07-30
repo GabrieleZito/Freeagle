@@ -9,7 +9,6 @@ struct EventDetailView: View {
     @State private var showToast: Bool = false
     @State var event: Event
     @State private var username = UserDefaults.standard.object(forKey: "username")!
-    let people = PeopleService()
     let api = APIService()
     
     var body: some View {
@@ -57,7 +56,7 @@ struct EventDetailView: View {
                         subtitle: formatDateString(event.start_local),
                         color: .blue
                     )
-                    
+                    Spacer()
                     // Cuoricino per i preferiti
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.2)) {

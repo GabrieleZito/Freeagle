@@ -76,17 +76,8 @@ struct AddEventCard: View {
             }
             .padding(.horizontal, 20)
             .navigationBarTitleDisplayMode(.inline)
-            //            .toolbar {
-            //                ToolbarItem(placement: .navigationBarTrailing) {
-            //                    Button("Close") {
-            //                        dismiss()
-            //                    }
-            //                    .disabled(isLoading)
-            //                }
-            //            }
         }
         .sheet(isPresented: $showEventDetail) {
-            // Replace EventDetailView with your actual detail view
             if let event = foundEvent {
                 EventDetailView3(event: event)
             }
@@ -106,7 +97,6 @@ struct AddEventCard: View {
                     isLoading = false
                     foundEvent = result
                     showEventDetail = true
-                    // Don't dismiss immediately - let user see the detail view first
                 }
             } catch {
                 print(error)
