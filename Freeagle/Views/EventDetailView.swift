@@ -4,14 +4,13 @@ import MapKit
 
 struct EventDetailView: View {
     @Environment(\.dismiss) private var dismiss
-        @State private var isDetailsExpanded = true
-        @State private var isFavorite: Bool = false
-        @State private var showToast: Bool = false
-        @State var event: Event
-        @State private var username = UserDefaults.standard.object(forKey: "username")!
-        let people = PeopleService()
-        let api = APIService()
-    
+    @State private var isDetailsExpanded = true
+    @State private var isFavorite: Bool = false
+    @State private var showToast: Bool = false
+    @State var event: Event
+    @State private var username = UserDefaults.standard.object(forKey: "username")!
+    let people = PeopleService()
+    let api = APIService()
     
     var body: some View {
         VStack(spacing: 0) {
@@ -87,40 +86,42 @@ struct EventDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     // Sezione dettagli
-                    VStack(alignment: .leading, spacing: 16) {
-                        Button(action: {
-                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                isDetailsExpanded.toggle()
+                    if event.description.dropFirst(29).count > 2{
+                        VStack(alignment: .leading, spacing: 16) {
+                            Button(action: {
+                                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                    isDetailsExpanded.toggle()
+                                }
+                            }) {
+                                HStack {
+                                    Text("Details")
+                                        .font(.system(size: 22, weight: .bold))
+                                        .foregroundColor(.primary)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: isDetailsExpanded ? "chevron.up" : "chevron.down")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.blue)
+                                        .rotationEffect(.degrees(isDetailsExpanded ? 0 : 0))
+                                }
                             }
-                        }) {
-                            HStack {
-                                Text("Details")
-                                    .font(.system(size: 22, weight: .bold))
-                                    .foregroundColor(.primary)
-                                
-                                Spacer()
-                                
-                                Image(systemName: isDetailsExpanded ? "chevron.up" : "chevron.down")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.blue)
-                                    .rotationEffect(.degrees(isDetailsExpanded ? 0 : 0))
-                            }
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        if isDetailsExpanded {
-                            Text(event.description.dropFirst(29))
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundColor(.black)
-                                .lineSpacing(4)
-                                .transition(.asymmetric(
-                                    insertion: .opacity.combined(with: .move(edge: .top)),
-                                    removal: .opacity.combined(with: .move(edge: .top))
-                                ))
-                        }
+                            .buttonStyle(PlainButtonStyle())
                             
-                    }.padding(.horizontal, 16)
-                        .padding(.bottom, 40)
+                            if isDetailsExpanded {
+                                Text(event.description.dropFirst(29))
+                                    .font(.system(size: 16, weight: .regular))
+                                    .foregroundColor(.black)
+                                    .lineSpacing(4)
+                                    .transition(.asymmetric(
+                                        insertion: .opacity.combined(with: .move(edge: .top)),
+                                        removal: .opacity.combined(with: .move(edge: .top))
+                                    ))
+                            }
+                                
+                        }.padding(.horizontal, 16)
+                            .padding(.bottom, 40)
+                    }
                     
                 }
                 .padding(.top, 0)
@@ -134,35 +135,38 @@ struct EventDetailView: View {
         .ignoresSafeArea(edges: .top)
         .navigationBarBackButtonHidden(true)
         .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button(action: {dismiss()}) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 16, weight: .semibold))
-                                Text("Back")
-                                    .font(.system(size: 16, weight: .medium))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-                        }
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {dismiss()}) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Back")
+                            .font(.system(size: 16, weight: .medium))
                     }
-            //MARK:
-                    //Share Button
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            handleAddEvent()
-                        }) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(width: 40, height: 40)
-                                .background(.ultraThinMaterial, in: Circle())
-                        }
-                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
                 }
-        //.toolbar(.hidden, for: .tabBar)
+            }
+            
+            // Share Button
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    handleAddEvent()
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(.ultraThinMaterial, in: Circle())
+                        
+                }
+            }
+        }
+        .toast(isShown: $showToast,
+               message: "Invite code copied!",
+               icon: Image(systemName: "doc.on.clipboard.fill"))
     }
     
     // Funzione per aprire la mappa
@@ -181,55 +185,53 @@ struct EventDetailView: View {
     }
     
     func handleAddEvent() {
-            let inviteCode = "\(event.id)-\(username)"
-            
-            // Get existing events from UserDefaults (decode from Data)
-            var events: [Event] = []
-            if let data = UserDefaults.standard.data(forKey: "userEvents") {
-                do {
-                    events = try JSONDecoder().decode([Event].self, from: data)
-                } catch {
-                    print("Error decoding events: \(error)")
-                    events = []
-                }
-            }
-            //print(events)
-            // Check if an event with this invite code already exists
-            let existingEvent = events.first { $0.inviteCode == inviteCode }
-            
-            if existingEvent != nil {
-                // Event already exists, just copy the invite code
-                UIPasteboard.general.setValue(inviteCode, forPasteboardType: UTType.plainText.identifier)
-                showToast.toggle()
-                print("Event already exists, copied invite code: \(inviteCode)")
-            } else {
-                // Event doesn't exist, add it to the array
-                event.inviteCode = inviteCode
-                events.append(event)
-                
-                // Save back to UserDefaults (encode to Data)
-                do {
-                    let data = try JSONEncoder().encode(events)
-                    UserDefaults.standard.set(data, forKey: "userEvents")
-                    print("Successfully saved events to UserDefaults")
-                    
-                } catch {
-                    print("Error encoding events: \(error)")
-                }
-                Task{
-                    //print(event)
-                    try await api.newEvent(event: event)
-                }
-                
-                // Copy invite code to clipboard
-                UIPasteboard.general.setValue(inviteCode, forPasteboardType: UTType.plainText.identifier)
-                showToast.toggle()
-                
-                print("Added new event with invite code: \(inviteCode)")
-                print("Total events in UserDefaults: \(events.count)")
-            }
+        let inviteCode = "\(event.id)-\(username)"
         
+        // Get existing events from UserDefaults (decode from Data)
+        var events: [Event] = []
+        if let data = UserDefaults.standard.data(forKey: "userEvents") {
+            do {
+                events = try JSONDecoder().decode([Event].self, from: data)
+            } catch {
+                print("Error decoding events: \(error)")
+                events = []
+            }
         }
+        
+        // Check if an event with this invite code already exists
+        let existingEvent = events.first { $0.inviteCode == inviteCode }
+        
+        if existingEvent != nil {
+            // Event already exists, just copy the invite code
+            UIPasteboard.general.setValue(inviteCode, forPasteboardType: UTType.plainText.identifier)
+            showToast = true
+            print("Event already exists, copied invite code: \(inviteCode)")
+        } else {
+            // Event doesn't exist, add it to the array
+            event.inviteCode = inviteCode
+            events.append(event)
+            
+            // Save back to UserDefaults (encode to Data)
+            do {
+                let data = try JSONEncoder().encode(events)
+                UserDefaults.standard.set(data, forKey: "userEvents")
+                print("Successfully saved events to UserDefaults")
+                
+            } catch {
+                print("Error encoding events: \(error)")
+            }
+            Task{
+                try await api.newEvent(event: event)
+            }
+            
+            // Copy invite code to clipboard
+            UIPasteboard.general.setValue(inviteCode, forPasteboardType: UTType.plainText.identifier)
+            showToast = true
+            
+            print("Added new event with invite code: \(inviteCode)")
+            print("Total events in UserDefaults: \(events.count)")
+        }
+    }
     
     private func loadFavoriteStatus() {
         isFavorite = FavoritesManager.shared.isEventFavorite(eventID: event.id)
@@ -258,16 +260,9 @@ struct EventDetailView: View {
 
 extension View {
     func toast(isShown: Binding<Bool>, title: String? = nil, message: String, icon: Image = Image(systemName: "exclamationmark.circle"), alignment: Alignment = .top) -> some View {
-        
-        ZStack {
-            self
+        self.overlay(
             Toast(isShown: isShown, title: title, message: message, icon: icon, alignment: alignment)
-        }
+                .allowsHitTesting(false)
+        )
     }
-}
-
-
-
-#Preview {
-    EventDetailView(event: Event(id: "", title: "", description: "", category: "", entities: [Entity(entity_id: "", name: "", type: "")], start_local: "", end_local: "", location: [1.0, 1.0], geo: Geo(address: Address(country_code: "", formatted_address: ""))))
 }

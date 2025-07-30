@@ -31,7 +31,7 @@ struct Toast: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 24)
-                .background(RoundedRectangle(cornerRadius: 8).fill(.blue))
+                .background(RoundedRectangle(cornerRadius: 8).fill(.white))
                 .transition(.move(edge: alignmentToEdge(self.alignment)))
                 
             }

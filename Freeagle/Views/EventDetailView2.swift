@@ -1,5 +1,7 @@
 import SwiftUI
 import MapKit
+import UniformTypeIdentifiers
+
 
 struct EventDetailView2: View {
     @Environment(\.dismiss) private var dismiss
@@ -7,7 +9,11 @@ struct EventDetailView2: View {
     @State var event: Event
     @State private var isFavorite: Bool = false
     @State var users: [User] = []
+    @State private var showToast: Bool = false
+
     var api = APIService()
+    @State private var username = UserDefaults.standard.object(forKey: "username")!
+
 
     struct ParticipantRow: View {
         let participant: User
@@ -176,12 +182,27 @@ struct EventDetailView2: View {
                     .padding(.vertical, 8)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
                 }
+                
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    handleAddEvent()
+                }) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
             }
         }
         .onAppear {
             getUsers()
             loadFavoriteStatus()
         }
+        .toast(isShown: $showToast,
+               message: "Invite code copied!",
+               icon: Image(systemName: "doc.on.clipboard.fill"))
     }
     
     private func openInMaps() {
@@ -196,6 +217,12 @@ struct EventDetailView2: View {
         mapItem.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
+    }
+    
+    private func handleAddEvent(){
+        let inviteCode = "\(event.id)-\(username)"
+        UIPasteboard.general.setValue(inviteCode, forPasteboardType: UTType.plainText.identifier)
+
     }
 
     // MARK: - Funzioni per i Preferiti

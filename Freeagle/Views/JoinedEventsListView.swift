@@ -78,6 +78,8 @@ struct JoinedEventsListView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 20)
+                }.refreshable {
+                    fetchJoinedEvents()
                 }
                 //.navigationBarHidden(true)
             }else {

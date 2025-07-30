@@ -334,21 +334,26 @@ struct EventListView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         LazyVStack(spacing: 16) {
-                            ForEach(selectedFilter == .nearby ? filteredEvents : filteredEvents.reversed(), id: \.id) { event in
-                                if compareEventDateWithToday(event.start_local) == .orderedDescending {
-                                    Button(action: {
-                                        selectedEvent = event
-                                        // showingEventDetail = true
-                                    }) {
-                                        EventCardWithDistance(
-                                            event: event,
-                                            userLocation: userLocation,
-                                            showDistance: selectedFilter == .nearby
-                                        )
+                            if filteredEvents.count > 0{
+                                ForEach(selectedFilter == .nearby ? filteredEvents : filteredEvents.reversed(), id: \.id) { event in
+                                    if compareEventDateWithToday(event.start_local) == .orderedDescending || compareEventDateWithToday(event.start_local) == .orderedSame {
+                                        Button(action: {
+                                            selectedEvent = event
+                                            // showingEventDetail = true
+                                        }) {
+                                            EventCardWithDistance(
+                                                event: event,
+                                                userLocation: userLocation,
+                                                showDistance: selectedFilter == .nearby
+                                            )
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
                                     }
-                                    .buttonStyle(PlainButtonStyle())
                                 }
+                            }else{
+                                Text("There are no events for this category")
                             }
+                            
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 20)
